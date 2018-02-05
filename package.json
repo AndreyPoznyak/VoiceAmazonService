@@ -1,0 +1,27 @@
+{
+  "name": "voiceamazonservice",
+  "version": "1.0.0",
+  "description": "backend stuff for voice app",
+  "main": "handler.js",
+  "dependencies": {
+    "graphql": "^0.12.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AndreyPoznyak/VoiceAmazonService.git"
+  },
+  "keywords": [
+    "voice",
+    "aws"
+  ],
+  "author": "Andrey Poznyak",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AndreyPoznyak/VoiceAmazonService/issues"
+  },
+  "homepage": "https://github.com/AndreyPoznyak/VoiceAmazonService#readme"
+}
