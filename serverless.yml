@@ -8,6 +8,51 @@ provider:
   name: aws
   runtime: nodejs6.10
 
+ # environment:
+ #     DYNAMODB_TABLE: ${self:service}-${self:provider.stage}
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:DescribeTable
+          - dynamodb:Query
+          - dynamodb:Scan
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+          - dynamodb:UpdateItem
+          - dynamodb:DeleteItem
+          - dynamodb:GetRecords
+          - dynamodb:GetShardIterator
+          - dynamodb:DescribeStream
+          - dynamodb:ListStreams
+        Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:*"
+
+# S – String
+# N – Number
+# B – Binary
+# BOOL – Boolean
+# NULL – Null
+# M – Map
+# L – List
+# SS – String Set
+# NS – Number Set
+# BS – Binary Set
+
+resources:
+  Resources:
+    UsersTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: firstName
+            AttributeType: S
+        KeySchema:
+          - AttributeName: firstName
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: 'users'
+
 # you can overwrite defaults here
 #  stage: dev
 #  region: us-east-1
