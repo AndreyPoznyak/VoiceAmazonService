@@ -13,7 +13,7 @@ const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
 const promisify = foo => new Promise((resolve, reject) => {
     foo((error, result) => {
-        if(error) {
+        if (error) {
             reject(error)
         } else {
             resolve(result)
@@ -28,26 +28,60 @@ const promisify = foo => new Promise((resolve, reject) => {
 // });
 
 module.exports.query = (event, context, callback) => {
-    
+    let statusCode = 200;
+    let message = "";
 
-    callback(null, {
-        statusCode: 200,
-        body: "Hello"
+    const params = {
+        TableName: "users",
+        //Key: {
+        //    email: "test"
+        //}
+    };
+
+    //dynamoDb.get(params, (error, result) => {
+    dynamoDb.scan(params, (error, result) => {
+        if (error) {
+            statusCode = 400;
+            message = "Can't get users from DB";
+        } else {
+            if (result.Count > 0) {
+                message = JSON.stringify(result.Items)
+            } else {
+                message = "Users not found";
+                statusCode = 404;
+            }
+        }
+
+        callback(null, {
+            statusCode: statusCode,
+            body: message
+        });
     });
 };
 
 module.exports.hello = (event, context, callback) => {
-    console.log(event); // Contains incoming request data (e.g., query params, headers and more)
+    //event Contains incoming request data (e.g., query params, headers and more)
+    let statusCode = 200;
+    let message = "Successfully added test user to DB"
 
-    const response = {
-        statusCode: 200,
-        headers: {
-            "x-custom-header" : "whatever"
-        },
-        body: JSON.stringify({
-            message: "Testing the API. Hello mathafaka!"
-        })
+    const params = {
+        TableName: "users",
+        Item: {
+            email: `testmail@${Date.now()}.com`,
+            name: "User Name"
+        }
     };
 
-    callback(null, response);
+    dynamoDb.put(params, (error) => {
+        if (error) {
+            console.log(error);
+            statusCode = 400;
+            message = "Error when adding test user to DB"
+        }
+
+        callback(null, {
+            statusCode: statusCode,
+            body: message
+        });
+    });
 };
