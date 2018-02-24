@@ -101,14 +101,14 @@ resources:
 
 # api gateway test here:
 functions:
-  query:
-    handler: handler.query
+  users:
+    handler: src/api/api.users
     events:
-      - http: GET query
-  hello:
-    handler: handler.hello
+      - http: GET users
+  adduser:
+    handler: src/api/api.adduser
     events:
-      - http: GET hello
+      - http: GET adduser
 
 
 #    The following are a few example events you can configure
