@@ -8,13 +8,13 @@ const TableName = {
 };
 
 module.exports = {
-    saveUser: () => {
+    saveUser: (email) => {
         const params = {
             TableName: TableName.USERS,
             Item: {}
         };
         const userInfo = {
-            email: `testmail@${Date.now()}.com`,
+            email: email,
             name: "User Name"
         };
 

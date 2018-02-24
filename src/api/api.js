@@ -1,5 +1,7 @@
 'use strict'
 
+const database = require("../database/database");
+
 // const {
 //     graphql,
 //     GraphQLSchema,
@@ -7,8 +9,6 @@
 //     GraphQLString,
 //     GraphQLNonNull
 // } = require('graphql');
-
-const database = require("../database/database");
 
 // const schema = new GraphQLSchema({
 //     query: new GraphQLObjectType({
@@ -23,19 +23,42 @@ const performRequestCallback = (callback, statusCode, body) => {
     });
 };
 
-module.exports.users = (event, context, callback) => {
+//NOTE: event Contains incoming request data (e.g., query params, headers and more)
+
+module.exports.getAllUsers = (event, context, callback) => {
     database.getAllUsers().then(users => {
         performRequestCallback(callback, 200, JSON.stringify(users));
     }).catch(error => {
         console.log(error);
-        performRequestCallback(callback, 400, "Can't get users from DB");
+        performRequestCallback(callback, 400, "Error: Can't get users from DB");
     });
 };
 
-module.exports.adduser = (event, context, callback) => {
-    //event Contains incoming request data (e.g., query params, headers and more)
+module.exports.getUser = (event, context, callback) => {
+    const info = JSON.parse(event.body); //TODO: pass it appropriately and parse
 
-    database.saveUser().then(() => {
+    if (!info || !info.email || info.email.indexOf("@") === -1) {
+        performRequestCallback(callback, 400, JSON.stringify(event));
+        return;
+    }
+    database.getUser(info.email).then(user => {
+        performRequestCallback(callback, 200, user);
+    }).catch(error => {
+        console.log(error);
+        //TODO: add 404
+        performRequestCallback(callback, 400, "Error: Getting the user failed");
+    });
+};
+
+module.exports.addUser = (event, context, callback) => {
+    const info = JSON.parse(event.body);
+
+    if (!info.email || info.email.indexOf("@") === -1) {
+        performRequestCallback(callback, 400, "Error: request data is not valid");
+        return;
+    }
+
+    database.saveUser(info.email).then(() => {
         performRequestCallback(callback, 200, "Successfully added test user to DB");
     }).catch(error => {
         console.log(error);

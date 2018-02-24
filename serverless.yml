@@ -101,14 +101,27 @@ resources:
 
 # api gateway test here:
 functions:
-  users:
-    handler: src/api/api.users
+  getUsers:
+    handler: src/api/api.getAllUsers
     events:
-      - http: GET users
-  adduser:
-    handler: src/api/api.adduser
+      - http:
+          path: users
+          method: get
+#          cors: true
+  getUser:
+    handler: src/api/api.getUser
     events:
-      - http: GET adduser
+      - http:
+          path: user
+          method: get
+#          cors: true
+  addUser:
+    handler: src/api/api.addUser
+    events:
+      - http:
+          path: user
+          method: post
+          cors: true
 
 
 #    The following are a few example events you can configure
