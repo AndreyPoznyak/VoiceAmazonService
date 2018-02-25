@@ -26,6 +26,7 @@ const performRequestCallback = (callback, statusCode, body) => {
 //NOTE: event Contains incoming request data (e.g., query params, headers and more)
 
 module.exports.getAllUsers = (event, context, callback) => {
+    console.log("Getting all users request");
     database.getAllUsers().then(users => {
         performRequestCallback(callback, 200, JSON.stringify(users));
     }).catch(error => {
@@ -36,6 +37,8 @@ module.exports.getAllUsers = (event, context, callback) => {
 
 module.exports.getUser = (event, context, callback) => {
     const info = event.queryStringParameters;
+
+    console.log(`Getting user with these params: ${info}`);
 
     if (!info || !info.email || info.email.indexOf("@") === -1) {
         performRequestCallback(callback, 400, "Error: request data is not valid");
@@ -53,6 +56,8 @@ module.exports.getUser = (event, context, callback) => {
 
 module.exports.addUser = (event, context, callback) => {
     const info = JSON.parse(event.body);
+
+    console.log(`Adding user with these params: ${info}`);
 
     if (!info.email || info.email.indexOf("@") === -1) {
         performRequestCallback(callback, 400, "Error: request data is not valid");
