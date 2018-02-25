@@ -21,8 +21,16 @@ module.exports = {
         //TODO: add validation of coming fields
         params.Item = userInfo;
 
-        //TODO: add check on success
-        return dynamoDb.put(params).promise();
+        //TODO: get back to promise()
+        return new Promise((resolve, reject) => {
+            dynamoDb.put(params, (error, data) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(data);
+                }
+            });
+        });
     },
 
     getAllUsers: () => {
