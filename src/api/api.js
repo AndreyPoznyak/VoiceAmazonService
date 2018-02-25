@@ -64,12 +64,22 @@ module.exports.addUser = (event, context, callback) => {
         return;
     }
 
-    //TODO: figure out what happens if the email already registered - should be error
-    database.saveUser(info.email).then(result => {
-        console.log(result);
-        performRequestCallback(callback, 200, "Successfully added test user to DB");
-    }, error => {
-        console.log(error);
-        performRequestCallback(callback, 400, "Error when adding test user to DB");
+    database.getUser(info.email).then(user => {
+        if (user) {
+            performRequestCallback(callback, 400, JSON.stringify({
+                message: "User has already been registered",
+                user: user
+            }));
+        } else {
+            database.saveUser(info).then(result => {
+                console.log(result);
+                performRequestCallback(callback, 200, "Successfully added user to DB");
+            }, error => {
+                console.log(error);
+                performRequestCallback(callback, 400, "Error when adding user to DB");
+            });
+        }
+    }, () => {
+        performRequestCallback(callback, 400, "Error when trying to check user's presence in DB");
     });
 };

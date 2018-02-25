@@ -8,29 +8,21 @@ const TableName = {
 };
 
 module.exports = {
-    saveUser: (email) => {
+    saveUser: (info) => {
         const params = {
             TableName: TableName.USERS,
-            Item: {}
-        };
-        const userInfo = {
-            email: email,
-            name: "User Name"
+            Item: {
+                email: info.email,
+                avatarPath: info.avatarPath || null,
+                facebookId: info.facebookId || null,
+                googleId: info.googleId || null,
+                firstName: info.firstName || null,
+                lastName: info.lastName || null,
+                name: info.name || null
+            }
         };
 
-        //TODO: add validation of coming fields
-        params.Item = userInfo;
-
-        //TODO: get back to promise()
-        return new Promise((resolve, reject) => {
-            dynamoDb.put(params, (error, data) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(data);
-                }
-            });
-        });
+        return dynamoDb.put(params).promise();
     },
 
     getAllUsers: () => {
