@@ -35,14 +35,15 @@ module.exports.getAllUsers = (event, context, callback) => {
 };
 
 module.exports.getUser = (event, context, callback) => {
-    const info = JSON.parse(event.body); //TODO: pass it appropriately and parse
+    const info = event.queryStringParameters;
 
     if (!info || !info.email || info.email.indexOf("@") === -1) {
-        performRequestCallback(callback, 400, JSON.stringify(event));
+        performRequestCallback(callback, 400, "Error: request data is not valid");
         return;
     }
+
     database.getUser(info.email).then(user => {
-        performRequestCallback(callback, 200, user);
+        performRequestCallback(callback, 200, JSON.stringify(user));
     }).catch(error => {
         console.log(error);
         //TODO: add 404

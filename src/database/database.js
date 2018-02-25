@@ -21,6 +21,7 @@ module.exports = {
         //TODO: add validation of coming fields
         params.Item = userInfo;
 
+        //TODO: add check on success
         return dynamoDb.put(params).promise();
     },
 
@@ -41,6 +42,6 @@ module.exports = {
             }
         };
 
-        return dynamoDb.get(params).promise();
+        return dynamoDb.get(params).promise().then(response => response.Item);
     }
 };

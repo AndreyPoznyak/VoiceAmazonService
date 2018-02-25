@@ -107,14 +107,14 @@ functions:
       - http:
           path: users
           method: get
-#          cors: true
+          cors: true
   getUser:
     handler: src/api/api.getUser
     events:
       - http:
           path: user
           method: get
-#          cors: true
+          cors: true
   addUser:
     handler: src/api/api.addUser
     events:
