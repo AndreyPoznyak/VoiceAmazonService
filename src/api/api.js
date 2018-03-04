@@ -16,10 +16,12 @@ const database = require("../database/database");
 //     }),
 // });
 
+const wrapMessage = message => JSON.stringify({ message });
+
 const performRequestCallback = (callback, statusCode, body) => {
     callback(null, {
-        statusCode: statusCode,
-        body: body
+        statusCode,
+        body
     });
 };
 
@@ -31,7 +33,7 @@ module.exports.getAllUsers = (event, context, callback) => {
         performRequestCallback(callback, 200, JSON.stringify(users));
     }).catch(error => {
         console.log(error);
-        performRequestCallback(callback, 400, "Error: Can't get users from DB");
+        performRequestCallback(callback, 400, wrapMessage("Error: Can't get users from DB"));
     });
 };
 
@@ -41,16 +43,20 @@ module.exports.getUser = (event, context, callback) => {
     console.log(`Getting user with these params: ${info}`);
 
     if (!info || !info.email || info.email.indexOf("@") === -1) {
-        performRequestCallback(callback, 400, "Error: request data is not valid");
+        performRequestCallback(callback, 400, wrapMessage("Error: request data is not valid"));
         return;
     }
 
     database.getUser(info.email).then(user => {
-        performRequestCallback(callback, 200, JSON.stringify(user));
+        if (user) {
+            performRequestCallback(callback, 200, JSON.stringify(user));
+        } else {
+            performRequestCallback(callback, 404, wrapMessage(`User with email ${info.email} is not found`));
+        }
     }).catch(error => {
         console.log(error);
         //TODO: add 404
-        performRequestCallback(callback, 400, "Error: Getting the user failed");
+        performRequestCallback(callback, 400, wrapMessage("Error: Getting the user failed"));
     });
 };
 
@@ -60,7 +66,7 @@ module.exports.addUser = (event, context, callback) => {
     console.log(`Adding user with these params: ${info}`);
 
     if (!info.email || info.email.indexOf("@") === -1) {
-        performRequestCallback(callback, 400, "Error: request data is not valid");
+        performRequestCallback(callback, 400, wrapMessage("Error: request data is not valid"));
         return;
     }
 
@@ -73,13 +79,13 @@ module.exports.addUser = (event, context, callback) => {
         } else {
             database.saveUser(info).then(result => {
                 console.log(result);
-                performRequestCallback(callback, 200, "Successfully added user to DB");
+                performRequestCallback(callback, 200, wrapMessage("Successfully added user to DB"));
             }, error => {
                 console.log(error);
-                performRequestCallback(callback, 400, "Error when adding user to DB");
+                performRequestCallback(callback, 400, wrapMessage("Error: Adding user to DB failed"));
             });
         }
     }, () => {
-        performRequestCallback(callback, 400, "Error when trying to check user's presence in DB");
+        performRequestCallback(callback, 400, wrapMessage("Error: Not able to check user's presence in DB"));
     });
 };
