@@ -1,7 +1,7 @@
-'use strict'
+const { Client } = require("pg");
+const dbCredentials = require("../../data/config");
 
-const AWS = require('aws-sdk');
-const dynamoDb = new AWS.DynamoDB.DocumentClient();
+const client = new Client(dbCredentials.postgres);
 
 const TableName = {
     USERS: "users"
@@ -26,11 +26,21 @@ module.exports = {
     },
 
     getAllUsers: () => {
-        const params = {
-            TableName: TableName.USERS
-        };
+        //const params = {
+        //    TableName: TableName.USERS
+        //};
+		//
+        //return dynamoDb.scan(params).promise().then(response => response.Items);
 
-        return dynamoDb.scan(params).promise().then(response => response.Items);
+        return new Promise((resolve, reject) => {
+            client.connect();
+
+            client.query('SELECT NOW()', (err, res) => {
+                console.log(err, res);
+                client.end();
+                resolve(res);
+            });
+        });
     },
 
     getUser: (email) => {

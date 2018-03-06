@@ -3,6 +3,7 @@ service: VoiceAmazonService
 provider:
   name: aws
   runtime: nodejs6.10
+  role: arn:aws:iam::693250841392:role/lambda-vpc-execution-role
 
  # environment:
  #     DYNAMODB_TABLE: ${self:service}-${self:provider.stage}
