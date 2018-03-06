@@ -1,20 +1,4 @@
-'use strict'
-
 const database = require("../database/database");
-
-// const {
-//     graphql,
-//     GraphQLSchema,
-//     GraphQLObjectType,
-//     GraphQLString,
-//     GraphQLNonNull
-// } = require('graphql');
-
-// const schema = new GraphQLSchema({
-//     query: new GraphQLObjectType({
-//         name: 'RootQueryType' // an arbitrary name
-//     }),
-// });
 
 const wrapMessage = message => JSON.stringify({ message });
 
