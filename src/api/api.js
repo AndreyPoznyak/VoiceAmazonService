@@ -47,7 +47,7 @@ module.exports.getUser = (event, context, callback) => {
 module.exports.addUser = (event, context, callback) => {
     const info = JSON.parse(event.body);
 
-    console.log(`Adding user with these params: ${info}`);
+    console.log(`Adding user with these params: `, info);
 
     if (!info.email || info.email.indexOf("@") === -1) {
         performRequestCallback(callback, 400, wrapMessage("Error: request data is not valid"));
