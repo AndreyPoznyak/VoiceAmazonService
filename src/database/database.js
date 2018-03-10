@@ -1,17 +1,24 @@
-const { Client } = require("pg");
-const dbCredentials = require("../../data/config");
+const models = require("./models");
 
-const client = new Client(dbCredentials.postgres);
+//sequelize
+//    .authenticate()
+//    .then(() => {
+//        console.log('Connection has been established successfully.');
+//    })
+//    .catch(err => {
+//        console.error('Unable to connect to the database:', err);
+//    });
 
-const TableName = {
-    USERS: "users"
-};
+const User = models.User;
+const Article = models.Article;
 
 module.exports = {
     saveUser: (info) => {
-        const params = {
-            TableName: TableName.USERS,
-            Item: {
+        //TODO: do not do it all the time
+        User.sync().then(result => {
+            console.log(result);
+
+            return User.create({
                 email: info.email,
                 avatarPath: info.avatarPath || null,
                 facebookId: info.facebookId || null,
@@ -19,39 +26,23 @@ module.exports = {
                 firstName: info.firstName || null,
                 lastName: info.lastName || null,
                 name: info.name || null
-            }
-        };
-
-        return dynamoDb.put(params).promise();
+            });
+        }, error => {
+            console.log(error)
+        });
     },
 
     getAllUsers: () => {
-        //const params = {
-        //    TableName: TableName.USERS
-        //};
-		//
-        //return dynamoDb.scan(params).promise().then(response => response.Items);
-
-        return new Promise((resolve, reject) => {
-            client.connect();
-
-            client.query('SELECT NOW()', (err, res) => {
-                console.log(err, res);
-                client.end();
-                resolve(res);
-            });
-        });
+        return User.findAndCountAll();
     },
 
     getUser: (email) => {
         //TODO: add email validation
-        const params = {
-            TableName: TableName.USERS,
-            Key: {
-                email: email
-            }
-        };
 
-        return dynamoDb.get(params).promise().then(response => response.Item);
+        return User.findOne({
+            where: {
+                email
+            }
+        });
     }
 };
