@@ -5,67 +5,6 @@ provider:
   runtime: nodejs6.10
   role: arn:aws:iam::693250841392:role/lambda-vpc-execution-role
 
- # environment:
- #     DYNAMODB_TABLE: ${self:service}-${self:provider.stage}
-  iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - dynamodb:DescribeTable
-        - dynamodb:Query
-        - dynamodb:Scan
-        - dynamodb:GetItem
-        - dynamodb:PutItem
-        - dynamodb:UpdateItem
-        - dynamodb:DeleteItem
-        - dynamodb:GetRecords
-        - dynamodb:GetShardIterator
-        - dynamodb:DescribeStream
-        - dynamodb:ListStreams
-      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:*"
-
-# List of supported types:
-# S – String
-# N – Number
-# B – Binary
-# BOOL – Boolean
-# NULL – Null
-# M – Map
-# L – List
-# SS – String Set
-# NS – Number Set
-# BS – Binary Set
-
-resources:
-  Resources:
-    UsersTable:
-      Type: 'AWS::DynamoDB::Table'
-      DeletionPolicy: Retain
-      Properties:
-        AttributeDefinitions:
-          - AttributeName: email
-            AttributeType: S
-#          - AttributeName: facebookId
-#            AttributeType: S
-#          - AttributeName: googleId
-#            AttributeType: S
-#          - AttributeName: firstName
-#            AttributeType: S
-#          - AttributeName: lastName
-#            AttributeType: S
-#          - AttributeName: name
-#            AttributeType: S
-#          - AttributeName: avatarPath
-#            AttributeType: S
-#          - AttributeName: lastLoginDate
-#            AttributeType: S
-        KeySchema:
-          - AttributeName: email
-            KeyType: HASH
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
-        TableName: 'users'
-
 # you can overwrite defaults here
 #  stage: dev
 #  region: us-east-1
