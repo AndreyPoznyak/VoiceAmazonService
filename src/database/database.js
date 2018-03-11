@@ -1,21 +1,12 @@
 const models = require("./models");
 
-//sequelize
-//    .authenticate()
-//    .then(() => {
-//        console.log('Connection has been established successfully.');
-//    })
-//    .catch(err => {
-//        console.error('Unable to connect to the database:', err);
-//    });
-
 const User = models.User;
 const Article = models.Article;
 
 module.exports = {
     saveUser: (info) => {
         //TODO: do not do it all the time
-        User.sync().then(result => {
+        return User.sync().then(result => {
             console.log(result);
 
             return User.create({
@@ -28,12 +19,15 @@ module.exports = {
                 name: info.name || null
             });
         }, error => {
-            console.log(error)
+            console.log(error);
         });
     },
 
     getAllUsers: () => {
-        return User.findAndCountAll();
+        return User.findAndCountAll().then(result => {
+            console.log("Found " + result.count + " users");
+            return result.rows;
+        });
     },
 
     getUser: (email) => {
