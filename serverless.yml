@@ -104,6 +104,7 @@ resources:
 functions:
   getUsers:
     handler: src/api/api.getAllUsers
+#    timeout: #20 default is 6
     events:
       - http:
           path: users

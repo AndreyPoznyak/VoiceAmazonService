@@ -12,6 +12,8 @@ const performRequestCallback = (callback, statusCode, body) => {
 //NOTE: event Contains incoming request data (e.g., query params, headers and more)
 
 module.exports.getAllUsers = (event, context, callback) => {
+    context.callbackWaitsForEmptyEventLoop = false;
+
     console.log("Getting all users request");
     database.getAllUsers().then(users => {
         performRequestCallback(callback, 200, JSON.stringify(users));
@@ -22,6 +24,8 @@ module.exports.getAllUsers = (event, context, callback) => {
 };
 
 module.exports.getUser = (event, context, callback) => {
+    context.callbackWaitsForEmptyEventLoop = false;
+
     const info = event.queryStringParameters;
 
     console.log(`Getting user with these params: ${info}`);
@@ -45,6 +49,8 @@ module.exports.getUser = (event, context, callback) => {
 };
 
 module.exports.addUser = (event, context, callback) => {
+    context.callbackWaitsForEmptyEventLoop = false;
+
     const info = JSON.parse(event.body);
 
     console.log(`Adding user with these params: `, info);
