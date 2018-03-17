@@ -18,10 +18,8 @@ const Article = sequelize.define("article", {
     language: Sequelize.STRING,
     text: Sequelize.STRING,
     pathToSpeech: Sequelize.STRING,
-    active: Sequelize.BOOLEAN,
     externalSystemId: Sequelize.STRING,
     progress: Sequelize.INTEGER,
-    //TODO: use server time instead of client time
     timeAdded: Sequelize.DATE
 });
 

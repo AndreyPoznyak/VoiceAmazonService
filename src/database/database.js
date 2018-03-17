@@ -54,15 +54,13 @@ module.exports = {
         return Article.sync().then(result => {
             console.log(result);
 
-            return User.create({
+            return Article.create({
                 url: info.url || null,
                 title: info.title || null,
                 language: info.language || null,
                 text: info.text || null,
                 pathToSpeech: info.pathToSpeech || null,
-                active: info.active || false,
                 externalSystemId: info.externalSystemId || null,
-                progress: info.progress || 0,
                 timeAdded: info.timeAdded || null
             });
         }, error => {
