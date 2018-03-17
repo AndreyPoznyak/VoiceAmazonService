@@ -64,7 +64,7 @@ functions:
           method: post
           cors: true
   #Articles API 
-  addUser:
+  addArticle:
   handler: src/api/api.addArticle
   events:
     - http:
