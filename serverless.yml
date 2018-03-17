@@ -63,14 +63,14 @@ functions:
           path: user
           method: post
           cors: true
-  #Articles API 
+  #Articles API
   addArticle:
-  handler: src/api/api.addArticle
-  events:
-    - http:
-        path: article
-        method: post
-        cors: true
+    handler: src/api/api.addArticle
+    events:
+      - http:
+          path: article
+          method: post
+          cors: true
 
 
 #    The following are a few example events you can configure
