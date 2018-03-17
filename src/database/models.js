@@ -17,7 +17,11 @@ const Article = sequelize.define("article", {
     title: Sequelize.STRING,
     language: Sequelize.STRING,
     text: Sequelize.STRING,
-    pathToSpeech: Sequelize.STRING
+    pathToSpeech: Sequelize.STRING,
+    active: Sequelize.BOOLEAN,
+    externalSystemId: Sequelize.STRING,
+    progress: Sequelize.INTEGER,
+    timeAdded: Sequelize.DATE
 });
 
 module.exports = {
