@@ -38,5 +38,36 @@ module.exports = {
                 email
             }
         });
-    }
+    },
+
+    //Articles
+    getArticle: (externalSystemId) => {
+        return Article.findOne({
+            where: {
+                externalSystemId
+            }
+        });
+    },
+
+    saveArticle: (info) => {
+        //TODO: do not do it all the time
+        return Article.sync().then(result => {
+            console.log(result);
+
+            return User.create({
+                url: info.url || null,
+                title: info.title || null,
+                language: info.language || null,
+                text: info.text || null,
+                pathToSpeech: info.pathToSpeech || null,
+                active: info.active || false,
+                externalSystemId: info.externalSystemId || null,
+                progress: info.progress || 0,
+                timeAdded: info.timeAdded || null
+            });
+        }, error => {
+            console.log(error);
+        });
+    },
+
 };

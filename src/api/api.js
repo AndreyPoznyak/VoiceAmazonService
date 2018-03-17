@@ -79,3 +79,32 @@ module.exports.addUser = (event, context, callback) => {
         performRequestCallback(callback, 400, wrapMessage("Error: Not able to check user's presence in DB"));
     });
 };
+
+//Articles API
+module.exports.addArticle = (event, context, callback) => {
+    context.callbackWaitsForEmptyEventLoop = false;
+
+    const info = JSON.parse(event.body);
+
+    console.log(`Adding article with these params: `, info);
+
+    //TODO: think about externalSystemId again
+    database.getArticle(info.externalSystemId).then(article => {
+        if (article) {
+            performRequestCallback(callback, 400, JSON.stringify({
+                message: "Article has already been added",
+                article: article
+            }));
+        } else {
+            database.saveArticle(info).then(result => {
+                console.log(result);
+                performRequestCallback(callback, 200, wrapMessage("Successfully added article to DB"));
+            }, error => {
+                console.log(error);
+                performRequestCallback(callback, 400, wrapMessage("Error: Adding article to DB failed"));
+            });
+        }
+    }, () => {
+        performRequestCallback(callback, 400, wrapMessage("Error: Not able to check article's presence in DB"));
+    });
+};

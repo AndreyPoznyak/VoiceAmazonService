@@ -21,6 +21,7 @@ const Article = sequelize.define("article", {
     active: Sequelize.BOOLEAN,
     externalSystemId: Sequelize.STRING,
     progress: Sequelize.INTEGER,
+    //TODO: use server time instead of client time
     timeAdded: Sequelize.DATE
 });
 
