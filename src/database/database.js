@@ -20,6 +20,8 @@ module.exports = {
             });
         }, error => {
             console.log(error);
+
+            return Promise.reject(error);
         });
     },
 
@@ -42,29 +44,36 @@ module.exports = {
 
     //Articles
     getArticle: (externalSystemId) => {
-        return Article.findOne({
-            where: {
-                externalSystemId
-            }
+        //TODO: do not do it all the time, this is to be sure that the table is created, get is always called before add
+        return Article.sync().then(() => {
+            return Article.findOne({
+                where: {
+                    externalSystemId
+                }
+            });
+        }, error => {
+            return Promise.reject(error);
         });
     },
 
     saveArticle: (info) => {
-        //TODO: do not do it all the time
-        return Article.sync().then(result => {
-            console.log(result);
+        //TODO: add validation to the fields
+        return Article.create({
+            url: info.url || null,
+            title: info.title || null,
+            language: info.language || null,
+            text: info.text || null,
+            pathToSpeech: info.pathToSpeech || null,
+            externalSystemId: info.externalSystemId || null,
+            timeAdded: info.timeAdded || null
+        });
+    },
 
-            return Article.create({
-                url: info.url || null,
-                title: info.title || null,
-                language: info.language || null,
-                text: info.text || null,
-                pathToSpeech: info.pathToSpeech || null,
-                externalSystemId: info.externalSystemId || null,
-                timeAdded: info.timeAdded || null
-            });
-        }, error => {
-            console.log(error);
+    getAllArticles: () => {
+        return Article.findAndCountAll().then(result => {
+            console.log("Found " + result.count + " articles");
+
+            return result.rows;
         });
     }
 };

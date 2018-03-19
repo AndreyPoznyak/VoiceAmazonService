@@ -81,6 +81,20 @@ module.exports.addUser = (event, context, callback) => {
 };
 
 //Articles API
+
+module.exports.getAllArticles = (event, context, callback) => {
+    context.callbackWaitsForEmptyEventLoop = false;
+
+    console.log("Getting all alrticles request");
+
+    database.getAllArticles().then(articles => {
+        performRequestCallback(callback, 200, JSON.stringify(articles));
+    }, error => {
+        console.log(error);
+        performRequestCallback(callback, 400, wrapMessage("Error: Can't get articles from DB"));
+    });
+};
+
 module.exports.addArticle = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
@@ -104,7 +118,8 @@ module.exports.addArticle = (event, context, callback) => {
                 performRequestCallback(callback, 400, wrapMessage("Error: Adding article to DB failed"));
             });
         }
-    }, () => {
+    }, error => {
+        console.log(error);
         performRequestCallback(callback, 400, wrapMessage("Error: Not able to check article's presence in DB"));
     });
 };
