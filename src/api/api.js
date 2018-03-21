@@ -1,4 +1,5 @@
 const database = require("../database/database");
+const validator = require("../utils/validation");
 
 const wrapMessage = message => JSON.stringify({ message });
 
@@ -13,11 +14,11 @@ const performRequestCallback = (callback, statusCode, body) => {
 
 module.exports.getAllUsers = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
-
     console.log("Getting all users request");
+
     database.getAllUsers().then(users => {
         performRequestCallback(callback, 200, JSON.stringify(users));
-    }).catch(error => {
+    }, error => {
         console.log(error);
         performRequestCallback(callback, 400, wrapMessage("Error: Can't get users from DB"));
     });
@@ -27,11 +28,12 @@ module.exports.getUser = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
     const info = event.queryStringParameters;
+    const validationResult = validator.isEmail(info);
 
-    console.log(`Getting user with these params: ${info}`);
+    console.log("Getting user with these params:", info);
 
-    if (!info || !info.email || info.email.indexOf("@") === -1) {
-        performRequestCallback(callback, 400, wrapMessage("Error: request data is not valid"));
+    if (!validationResult.success) {
+        performRequestCallback(callback, 400, wrapMessage(`Error: ${validationResult.message}`));
         return;
     }
 
@@ -41,9 +43,9 @@ module.exports.getUser = (event, context, callback) => {
         } else {
             performRequestCallback(callback, 404, wrapMessage(`User with email ${info.email} is not found`));
         }
-    }).catch(error => {
+    }, error => {
         console.log(error);
-        //TODO: add 404
+
         performRequestCallback(callback, 400, wrapMessage("Error: Getting the user failed"));
     });
 };
@@ -52,11 +54,12 @@ module.exports.addUser = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
     const info = JSON.parse(event.body);
+    const validationResult = validator.isUserParamsSufficient(info);
 
     console.log(`Adding user with these params: `, info);
 
-    if (!info.email || info.email.indexOf("@") === -1) {
-        performRequestCallback(callback, 400, wrapMessage("Error: request data is not valid"));
+    if (!validationResult.success) {
+        performRequestCallback(callback, 400, wrapMessage(`Error: ${validationResult.message}`));
         return;
     }
 
@@ -85,12 +88,13 @@ module.exports.addUser = (event, context, callback) => {
 module.exports.getAllArticles = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
-    console.log("Getting all alrticles request");
+    console.log("Getting all articles request");
 
     database.getAllArticles().then(articles => {
         performRequestCallback(callback, 200, JSON.stringify(articles));
     }, error => {
         console.log(error);
+
         performRequestCallback(callback, 400, wrapMessage("Error: Can't get articles from DB"));
     });
 };
@@ -99,11 +103,18 @@ module.exports.addArticle = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
     const info = JSON.parse(event.body);
+    const validationResult = validator.isArticleParamsSufficient(info);
 
-    console.log(`Adding article with these params: `, info);
+    console.log("Adding article with these params: ", info);
 
-    //TODO: think about externalSystemId again
-    database.getArticle(info.externalSystemId).then(article => {
+    if (!validationResult.success) {
+        performRequestCallback(callback, 400, wrapMessage(`Error: ${validationResult.message}`));
+        return;
+    }
+
+    database.getArticle({
+        url: info.url
+    }).then(article => {
         if (article) {
             performRequestCallback(callback, 400, JSON.stringify({
                 message: "Article has already been added",

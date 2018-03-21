@@ -1,7 +1,6 @@
 const models = require("./models");
 
-const User = models.User;
-const Article = models.Article;
+const { User, Article }  = models;
 
 module.exports = {
     saveUser: (info) => {
@@ -16,7 +15,7 @@ module.exports = {
                 googleId: info.googleId || null,
                 firstName: info.firstName || null,
                 lastName: info.lastName || null,
-                name: info.name || null
+                name: info.name
             });
         }, error => {
             console.log(error);
@@ -33,7 +32,7 @@ module.exports = {
     },
 
     getUser: (email) => {
-        //TODO: add email validation
+        //TODO: make sure that the table is created
 
         return User.findOne({
             where: {
@@ -43,13 +42,11 @@ module.exports = {
     },
 
     //Articles
-    getArticle: (externalSystemId) => {
+    getArticle: (options) => {
         //TODO: do not do it all the time, this is to be sure that the table is created, get is always called before add
         return Article.sync().then(() => {
             return Article.findOne({
-                where: {
-                    externalSystemId
-                }
+                where: options
             });
         }, error => {
             return Promise.reject(error);
@@ -57,14 +54,12 @@ module.exports = {
     },
 
     saveArticle: (info) => {
-        //TODO: add validation to the fields
         return Article.create({
-            url: info.url || null,
-            title: info.title || null,
+            url: info.url,
+            title: info.title,
             language: info.language || null,
-            text: info.text || null,
+            text: info.text,
             pathToSpeech: info.pathToSpeech || null,
-            externalSystemId: info.externalSystemId || null,
             timeAdded: info.timeAdded || null
         });
     },

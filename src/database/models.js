@@ -18,8 +18,8 @@ const Article = sequelize.define("article", {
     language: Sequelize.STRING,
     text: Sequelize.STRING,
     pathToSpeech: Sequelize.STRING,
-    externalSystemId: Sequelize.STRING,
-    progress: Sequelize.INTEGER,
+    //should be moved to relations table
+    //externalSystemId: Sequelize.STRING,
     timeAdded: Sequelize.DATE
 });
 
