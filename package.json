@@ -17,5 +17,8 @@
     "serverless": "^1.26.1",
     "validator": "^9.4.1"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "express": "^4.16.3",
+    "yamljs": "^0.3.0"
+  }
 }
