@@ -7,6 +7,7 @@ const slsConfig = YAML.load('serverless.yml');
 
 Object.values(slsConfig.functions).forEach(func => {
     let description = func.events[0].http;
+    let funcName = func.handler;
 
     if (description.method === "post") {
         app.post(description.path, (req, res) => {
