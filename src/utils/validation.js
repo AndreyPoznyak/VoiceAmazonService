@@ -23,7 +23,7 @@ module.exports = {
         let success = true;
         let errorMessage = "";
 
-        if (!info || !info.title || !info.text) {
+        if (!info || !info.title || !info.text || !info.url) {
             success = false;
             errorMessage = "No necessary data specified";
         } else if (!validator.isURL(info.url)) {
