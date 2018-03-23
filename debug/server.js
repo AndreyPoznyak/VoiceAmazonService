@@ -1,29 +1,39 @@
 const YAML = require('yamljs');
 const express = require('express');
+const bodyParser = require('body-parser');
+const api = require('../src/api/api');
 
 const app = express();
-
 const slsConfig = YAML.load('serverless.yml');
+
+app.use(bodyParser.json());
+
+const simulateApiCall = (method, request, response) => {
+    const event = {
+        queryStringParameters: request.query,
+        body: JSON.stringify(request.body || {})
+    };
+    const context = {};
+    const callback = (uselessParam, options) => {
+        response.status(options.statusCode).send(options.body);
+    };
+
+    api[method](event, context, callback);
+};
+
+console.log("Endpoints:");
 
 Object.values(slsConfig.functions).forEach(func => {
     let description = func.events[0].http;
-    let funcName = func.handler;
+    let funcName = func.handler.replace("src/api/api.", "");
 
-    if (description.method === "post") {
-        app.post(description.path, (req, res) => {
-            //res.send('Hello World!');
-        });
-    } else if (description.method === "get") {
-        app.get(description.path, (req, res) => {
-            //res.send('Hello World!');
-        });
-    } else {
-        console.log("Unsupported http method detected");
-    }
+    console.log(`${funcName}: ${description.method} - /${description.path}`);
+
+    app[description.method](`/${description.path}`, (req, res) => {
+        simulateApiCall(funcName, req, res);
+    });
 });
 
-app.get('/', (req, res) => {
-    res.send('Hello World!');
-});
+const port = 3000;
 
-//app.listen(3000, () => console.log('Test server listening on port 3000!'));
+app.listen(port, () => console.log('Test server listening here: ' + 'http://localhost:' + port + '/'));
