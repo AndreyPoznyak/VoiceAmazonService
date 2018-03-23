@@ -18,12 +18,19 @@ const Article = sequelize.define("article", {
     language: Sequelize.STRING,
     text: Sequelize.STRING,
     pathToSpeech: Sequelize.STRING,
-    //should be moved to relations table
-    //externalSystemId: Sequelize.STRING,
-    timeAdded: Sequelize.DATE
+    timeAdded: Sequelize.DATE //TODO: why do we need it?
 });
+
+const UserArticles = sequelize.define("userArticles", {
+    progress: Sequelize.INTEGER,
+    externalSystemId: Sequelize.STRING  //string maybe
+});
+
+User.belongsToMany(Article, { through: UserArticles });
+Article.belongsToMany(User, { through: UserArticles });
 
 module.exports = {
     User,
-    Article
+    Article,
+    UserArticles
 };
