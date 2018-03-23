@@ -6,6 +6,7 @@
   "license": "UNLICENSED",
   "homepage": "https://github.com/AndreyPoznyak/VoiceAmazonService#readme",
   "scripts": {
+    "start": "node debug/server.js",
     "deploy": "serverless deploy -v"
   },
   "main": "handler.js",

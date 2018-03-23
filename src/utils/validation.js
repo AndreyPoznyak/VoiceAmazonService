@@ -38,7 +38,7 @@ module.exports = {
     },
 
     isEmail: info => {
-        if (!info || !validator.isEmail(info.email)) {
+        if (!info || !info.email || !validator.isEmail(info.email)) {
             return {
                 success: false,
                 message: "Invalid or absent email address"

@@ -21,19 +21,21 @@ const simulateApiCall = (method, request, response) => {
     api[method](event, context, callback);
 };
 
+const port = 3000;
+const host = "http://localhost";
+
 console.log("Endpoints:");
 
 Object.values(slsConfig.functions).forEach(func => {
     let description = func.events[0].http;
     let funcName = func.handler.replace("src/api/api.", "");
 
-    console.log(`${funcName}: ${description.method} - /${description.path}`);
+    console.log(`${funcName}: ${description.method.toUpperCase()} - ${host + ":" + port}/${description.path}`);
 
     app[description.method](`/${description.path}`, (req, res) => {
         simulateApiCall(funcName, req, res);
     });
 });
 
-const port = 3000;
 
-app.listen(port, () => console.log('Test server listening here: ' + 'http://localhost:' + port + '/'));
+app.listen(port, () => console.log('Server launched!'));
