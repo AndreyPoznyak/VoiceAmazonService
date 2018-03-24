@@ -149,7 +149,7 @@ module.exports.getAllArticles = async (event, context, callback) => {
 
 //TODO: add user id in order to set up the relation
 //TODO: save the articles
-module.exports.getPocketArticles = (event, context, callback) => {
+module.exports.getPocketArticles = async (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
     const info = event.queryStringParameters;
@@ -159,6 +159,10 @@ module.exports.getPocketArticles = (event, context, callback) => {
 
     if (!validationResult.success) {
         performRequestCallback(callback, 400, wrapMessage(`Error: ${validationResult.message}`));
+        return;
+    }
+
+    if (!await trySyncDbSchema(callback)) {
         return;
     }
 
