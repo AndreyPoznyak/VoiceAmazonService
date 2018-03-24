@@ -26,7 +26,8 @@ const host = "http://localhost";
 
 console.log("Endpoints:");
 
-Object.values(slsConfig.functions).forEach(func => {
+Object.keys(slsConfig.functions).forEach(name => {
+    let func = slsConfig.functions[name];
     let description = func.events[0].http;
     let funcName = func.handler.replace("src/api/api.", "");
 
