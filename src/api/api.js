@@ -10,11 +10,26 @@ const performRequestCallback = (callback, statusCode, body) => {
     });
 };
 
-//NOTE: event Contains incoming request data (e.g., query params, headers and more)
+const trySyncDbSchema = async (callback) => {
+    try {
+        await database.syncDbSchema();
+        return true;
+    } catch (error) {
+        console.log(error);
+        performRequestCallback(callback, 400, wrapMessage("Error: Can't sync database schema."));
+        return false;
+    }
+}
 
-module.exports.getAllUsers = (event, context, callback) => {
+//NOTE: event Contains incoming request data (e.g., query params, headers and more)
+//User API
+module.exports.getAllUsers = async (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
     console.log("Getting all users request");
+
+    if (!await trySyncDbSchema(callback)) {
+        return;
+    }
 
     database.getAllUsers().then(users => {
         performRequestCallback(callback, 200, JSON.stringify(users));
@@ -24,7 +39,7 @@ module.exports.getAllUsers = (event, context, callback) => {
     });
 };
 
-module.exports.getUser = (event, context, callback) => {
+module.exports.getUser = async (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
     const info = event.queryStringParameters;
@@ -34,6 +49,10 @@ module.exports.getUser = (event, context, callback) => {
 
     if (!validationResult.success) {
         performRequestCallback(callback, 400, wrapMessage(`Error: ${validationResult.message}`));
+        return;
+    }
+
+    if (!await trySyncDbSchema(callback)) {
         return;
     }
 
@@ -50,7 +69,7 @@ module.exports.getUser = (event, context, callback) => {
     });
 };
 
-module.exports.addUser = (event, context, callback) => {
+module.exports.addUser = async (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
     const info = JSON.parse(event.body);
@@ -60,6 +79,10 @@ module.exports.addUser = (event, context, callback) => {
 
     if (!validationResult.success) {
         performRequestCallback(callback, 400, wrapMessage(`Error: ${validationResult.message}`));
+        return;
+    }
+
+    if (!await trySyncDbSchema(callback)) {
         return;
     }
 
@@ -83,12 +106,33 @@ module.exports.addUser = (event, context, callback) => {
     });
 };
 
-//Articles API
+module.exports.getUserArticles = async (event, context, callback) => {
+    context.callbackWaitsForEmptyEventLoop = false;
 
-module.exports.getAllArticles = (event, context, callback) => {
+    console.log("Getting all  user's articles request");
+
+    if (!await trySyncDbSchema(callback)) {
+        return;
+    }
+
+    database.getUserArticles().then(userArticles => {
+        performRequestCallback(callback, 200, JSON.stringify(userArticles));
+    }, error => {
+        console.log(error);
+
+        performRequestCallback(callback, 400, wrapMessage("Error: Can't get user's articles from DB"));
+    });
+};
+
+//Articles API
+module.exports.getAllArticles = async (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
     console.log("Getting all articles request");
+
+    if (!await trySyncDbSchema(callback)) {
+        return;
+    }
 
     database.getAllArticles().then(articles => {
         performRequestCallback(callback, 200, JSON.stringify(articles));
@@ -99,7 +143,7 @@ module.exports.getAllArticles = (event, context, callback) => {
     });
 };
 
-module.exports.addArticle = (event, context, callback) => {
+module.exports.addArticle = async (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
     const info = JSON.parse(event.body);
@@ -109,6 +153,10 @@ module.exports.addArticle = (event, context, callback) => {
 
     if (!validationResult.success) {
         performRequestCallback(callback, 400, wrapMessage(`Error: ${validationResult.message}`));
+        return;
+    }
+
+    if (!await trySyncDbSchema(callback)) {
         return;
     }
 
@@ -132,5 +180,5 @@ module.exports.addArticle = (event, context, callback) => {
     }, error => {
         console.log(error);
         performRequestCallback(callback, 400, wrapMessage("Error: Not able to check article's presence in DB"));
-    });
+        });
 };

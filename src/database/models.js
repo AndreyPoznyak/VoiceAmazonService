@@ -30,6 +30,7 @@ User.belongsToMany(Article, { through: UserArticles });
 Article.belongsToMany(User, { through: UserArticles });
 
 module.exports = {
+    sequelize,
     User,
     Article,
     UserArticles

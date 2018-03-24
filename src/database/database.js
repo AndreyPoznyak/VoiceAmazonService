@@ -1,26 +1,21 @@
 const models = require("./models");
 
-const { User, Article }  = models;
+const { sequelize, User, Article, UserArticles } = models;
 
 module.exports = {
+    syncDbSchema: () => {
+        sequelize.sync();
+    },
+
     saveUser: (info) => {
-        //TODO: do not do it all the time
-        return User.sync().then(result => {
-            console.log(result);
-
-            return User.create({
-                email: info.email,
-                avatarPath: info.avatarPath || null,
-                facebookId: info.facebookId || null,
-                googleId: info.googleId || null,
-                firstName: info.firstName || null,
-                lastName: info.lastName || null,
-                name: info.name
-            });
-        }, error => {
-            console.log(error);
-
-            return Promise.reject(error);
+        return User.create({
+            email: info.email,
+            avatarPath: info.avatarPath || null,
+            facebookId: info.facebookId || null,
+            googleId: info.googleId || null,
+            firstName: info.firstName || null,
+            lastName: info.lastName || null,
+            name: info.name
         });
     },
 
@@ -32,8 +27,6 @@ module.exports = {
     },
 
     getUser: (email) => {
-        //TODO: make sure that the table is created
-
         return User.findOne({
             where: {
                 email
@@ -43,13 +36,8 @@ module.exports = {
 
     //Articles
     getArticle: (options) => {
-        //TODO: do not do it all the time, this is to be sure that the table is created, get is always called before add
-        return Article.sync().then(() => {
-            return Article.findOne({
-                where: options
-            });
-        }, error => {
-            return Promise.reject(error);
+        return Article.findOne({
+            where: options
         });
     },
 
@@ -67,6 +55,14 @@ module.exports = {
     getAllArticles: () => {
         return Article.findAndCountAll().then(result => {
             console.log("Found " + result.count + " articles");
+
+            return result.rows;
+        });
+    },
+
+    getUserArticles: () => {
+        return UserArticles.findAndCountAll().then(result => {
+            console.log("Found " + result.count + "user's articles");
 
             return result.rows;
         });

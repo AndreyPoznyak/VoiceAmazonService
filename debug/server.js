@@ -15,6 +15,7 @@ const simulateApiCall = (method, request, response) => {
     };
     const context = {};
     const callback = (uselessParam, options) => {
+        response.set('Content-Type', 'application/json');
         response.status(options.statusCode).send(options.body);
     };
 
