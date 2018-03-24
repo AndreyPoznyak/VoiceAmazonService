@@ -75,7 +75,7 @@ functions:
     handler: src/api/api.addArticle
     events:
       - http:
-          path: article
+          path: articles
           method: post
           cors: true
   getArticles:
@@ -83,6 +83,13 @@ functions:
     events:
       - http:
           path: articles
+          method: get
+          cors: true
+  getPocketArticles:
+    handler: src/api/api.getPocketArticles
+    events:
+      - http:
+          path: pocket
           method: get
           cors: true
 

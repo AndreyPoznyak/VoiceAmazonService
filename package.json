@@ -12,6 +12,7 @@
   "main": "handler.js",
   "dependencies": {
     "graphql": "^0.12.3",
+    "node-fetch": "^2.1.1",
     "pg": "^7.4.1",
     "pg-hstore": "^2.3.2",
     "sequelize": "^4.35.5",
