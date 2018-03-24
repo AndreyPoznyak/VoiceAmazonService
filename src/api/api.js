@@ -96,7 +96,11 @@ module.exports.addUser = async (event, context, callback) => {
         } else {
             database.saveUser(info).then(result => {
                 console.log(result);
-                performRequestCallback(callback, 200, wrapMessage("Successfully added user to DB"));
+
+                performRequestCallback(callback, 201, JSON.stringify({
+                    message: "Successfully added user to DB",
+                    user: result
+                }));
             }, error => {
                 console.log(error);
                 performRequestCallback(callback, 400, wrapMessage("Error: Adding user to DB failed"));
