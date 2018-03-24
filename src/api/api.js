@@ -1,4 +1,5 @@
 const database = require("../database/database");
+const pocketProvider = require("../providers/pocket");
 const validator = require("../utils/validation");
 
 const wrapMessage = message => JSON.stringify({ message });
@@ -88,6 +89,9 @@ module.exports.addUser = (event, context, callback) => {
 module.exports.getAllArticles = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
+    //TODO: pass user's id and get relevant articles
+    const info = event.queryStringParameters;
+
     console.log("Getting all articles request");
 
     database.getAllArticles().then(articles => {
@@ -96,6 +100,30 @@ module.exports.getAllArticles = (event, context, callback) => {
         console.log(error);
 
         performRequestCallback(callback, 400, wrapMessage("Error: Can't get articles from DB"));
+    });
+};
+
+//TODO: add user id in order to set up the relation
+//TODO: save the articles
+module.exports.getPocketArticles = (event, context, callback) => {
+    context.callbackWaitsForEmptyEventLoop = false;
+
+    const info = event.queryStringParameters;
+    const validationResult = validator.isPocketParamsSufficient(info);
+
+    console.log("Getting articles from Pocket with these params: ", info);
+
+    if (!validationResult.success) {
+        performRequestCallback(callback, 400, wrapMessage(`Error: ${validationResult.message}`));
+        return;
+    }
+
+    pocketProvider.getArticles(info.consumerKey, info.accessToken).then(articles => {
+        console.log(articles);
+
+        performRequestCallback(callback, 200, JSON.stringify(articles));
+    }, () => {
+        performRequestCallback(callback, 400, wrapMessage("Error: Can't get articles from Pocket"));
     });
 };
 

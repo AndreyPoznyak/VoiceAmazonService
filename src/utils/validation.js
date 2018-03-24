@@ -23,7 +23,7 @@ module.exports = {
         let success = true;
         let errorMessage = "";
 
-        if (!info || !info.title || !info.text || !info.url) {
+        if (!info || !info.title || !info.url) {
             success = false;
             errorMessage = "No necessary data specified";
         } else if (!validator.isURL(info.url)) {
@@ -35,6 +35,21 @@ module.exports = {
             success: success,
             message: errorMessage
         };
+    },
+
+    isPocketParamsSufficient: info => {
+        let success = true;
+        let errorMessage = "";
+
+        if (!info || !info.consumerKey || !info.accessToken) {
+            success = false;
+            errorMessage = "No necessary data specified";
+        }
+
+        return {
+            success,
+            message: errorMessage
+        }
     },
 
     isEmail: info => {
