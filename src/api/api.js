@@ -1,6 +1,7 @@
 const database = require("../database/database");
 const pocketProvider = require("../providers/pocket");
 const validator = require("../utils/validation");
+const Codes = require("../constants/httpCodes");
 
 const wrapMessage = message => JSON.stringify({ message });
 
@@ -17,7 +18,7 @@ const trySyncDbSchema = async (callback) => {
         return true;
     } catch (error) {
         console.log(error);
-        performRequestCallback(callback, 400, wrapMessage("Error: Can't sync database schema."));
+        performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Can't sync database scheme."));
         return false;
     }
 }
@@ -33,10 +34,10 @@ module.exports.getAllUsers = async (event, context, callback) => {
     }
 
     database.getAllUsers().then(users => {
-        performRequestCallback(callback, 200, JSON.stringify(users));
+        performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(users));
     }, error => {
         console.log(error);
-        performRequestCallback(callback, 400, wrapMessage("Error: Can't get users from DB"));
+        performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Can't get users from DB"));
     });
 };
 
@@ -49,7 +50,7 @@ module.exports.getUser = async (event, context, callback) => {
     console.log("Getting user with these params:", info);
 
     if (!validationResult.success) {
-        performRequestCallback(callback, 400, wrapMessage(`Error: ${validationResult.message}`));
+        performRequestCallback(callback, Codes.BAD_REQUEST, wrapMessage(`Error: ${validationResult.message}`));
         return;
     }
 
@@ -59,14 +60,14 @@ module.exports.getUser = async (event, context, callback) => {
 
     database.getUser(info.email).then(user => {
         if (user) {
-            performRequestCallback(callback, 200, JSON.stringify(user));
+            performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(user));
         } else {
-            performRequestCallback(callback, 404, wrapMessage(`User with email ${info.email} is not found`));
+            performRequestCallback(callback, Codes.NOT_FOUND, wrapMessage(`User with email ${info.email} is not found`));
         }
     }, error => {
         console.log(error);
 
-        performRequestCallback(callback, 400, wrapMessage("Error: Getting the user failed"));
+        performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Getting the user failed"));
     });
 };
 
@@ -79,7 +80,7 @@ module.exports.addUser = async (event, context, callback) => {
     console.log(`Adding user with these params: `, info);
 
     if (!validationResult.success) {
-        performRequestCallback(callback, 400, wrapMessage(`Error: ${validationResult.message}`));
+        performRequestCallback(callback, Codes.BAD_REQUEST, wrapMessage(`Error: ${validationResult.message}`));
         return;
     }
 
@@ -89,7 +90,7 @@ module.exports.addUser = async (event, context, callback) => {
 
     database.getUser(info.email).then(user => {
         if (user) {
-            performRequestCallback(callback, 400, JSON.stringify({
+            performRequestCallback(callback, Codes.BAD_REQUEST, JSON.stringify({
                 message: "User has already been registered",
                 user: user
             }));
@@ -97,17 +98,17 @@ module.exports.addUser = async (event, context, callback) => {
             database.saveUser(info).then(result => {
                 console.log(result);
 
-                performRequestCallback(callback, 201, JSON.stringify({
+                performRequestCallback(callback, Codes.CREATED, JSON.stringify({
                     message: "Successfully added user to DB",
                     user: result
                 }));
             }, error => {
                 console.log(error);
-                performRequestCallback(callback, 400, wrapMessage("Error: Adding user to DB failed"));
+                performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Adding user to DB failed"));
             });
         }
     }, () => {
-        performRequestCallback(callback, 400, wrapMessage("Error: Not able to check user's presence in DB"));
+        performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Not able to check user's presence in DB"));
     });
 };
 
@@ -121,11 +122,11 @@ module.exports.getUserArticles = async (event, context, callback) => {
     }
 
     database.getUserArticles().then(userArticles => {
-        performRequestCallback(callback, 200, JSON.stringify(userArticles));
+        performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(userArticles));
     }, error => {
         console.log(error);
 
-        performRequestCallback(callback, 400, wrapMessage("Error: Can't get user's articles from DB"));
+        performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Can't get user's articles from DB"));
     });
 };
 
@@ -143,11 +144,11 @@ module.exports.getAllArticles = async (event, context, callback) => {
     }
 
     database.getAllArticles().then(articles => {
-        performRequestCallback(callback, 200, JSON.stringify(articles));
+        performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(articles));
     }, error => {
         console.log(error);
 
-        performRequestCallback(callback, 400, wrapMessage("Error: Can't get articles from DB"));
+        performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Can't get articles from DB"));
     });
 };
 
@@ -161,8 +162,9 @@ module.exports.getPocketArticles = async (event, context, callback) => {
 
     console.log("Getting articles from Pocket with these params: ", info);
 
+    //TODO: move it somehow not to duplicate the code
     if (!validationResult.success) {
-        performRequestCallback(callback, 400, wrapMessage(`Error: ${validationResult.message}`));
+        performRequestCallback(callback, Codes.BAD_REQUEST, wrapMessage(`Error: ${validationResult.message}`));
         return;
     }
 
@@ -173,9 +175,9 @@ module.exports.getPocketArticles = async (event, context, callback) => {
     pocketProvider.getArticles(info.consumerKey, info.accessToken).then(articles => {
         console.log(articles);
 
-        performRequestCallback(callback, 200, JSON.stringify(articles));
+        performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(articles));
     }, () => {
-        performRequestCallback(callback, 400, wrapMessage("Error: Can't get articles from Pocket"));
+        performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Can't get articles from Pocket"));
     });
 };
 
@@ -188,7 +190,7 @@ module.exports.addArticle = async (event, context, callback) => {
     console.log("Adding article with these params: ", info);
 
     if (!validationResult.success) {
-        performRequestCallback(callback, 400, wrapMessage(`Error: ${validationResult.message}`));
+        performRequestCallback(callback, Codes.BAD_REQUEST, wrapMessage(`Error: ${validationResult.message}`));
         return;
     }
 
@@ -200,21 +202,21 @@ module.exports.addArticle = async (event, context, callback) => {
         url: info.url
     }).then(article => {
         if (article) {
-            performRequestCallback(callback, 400, JSON.stringify({
+            performRequestCallback(callback, Codes.BAD_REQUEST, JSON.stringify({
                 message: "Article has already been added",
                 article: article
             }));
         } else {
             database.saveArticle(info).then(result => {
                 console.log(result);
-                performRequestCallback(callback, 200, wrapMessage("Successfully added article to DB"));
+                performRequestCallback(callback, Codes.CREATED, wrapMessage("Successfully added article to DB"));
             }, error => {
                 console.log(error);
-                performRequestCallback(callback, 400, wrapMessage("Error: Adding article to DB failed"));
+                performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Adding article to DB failed"));
             });
         }
     }, error => {
         console.log(error);
-        performRequestCallback(callback, 400, wrapMessage("Error: Not able to check article's presence in DB"));
-        });
+        performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Not able to check article's presence in DB"));
+    });
 };
