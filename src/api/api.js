@@ -28,6 +28,7 @@ const syncDatabaseScheme = callback => {
 };
 
 //NOTE: event Contains incoming request data (e.g., query params, headers and more)
+
 //User API
 module.exports.getAllUsers = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;

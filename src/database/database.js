@@ -38,6 +38,7 @@ module.exports = {
         });
     },
 
+    //TODO: link with user
     saveArticle: (info) => {
         return Article.create({
             url: info.url,
@@ -57,6 +58,7 @@ module.exports = {
         });
     },
 
+    //TODO: rewrite it
     getUserArticles: () => {
         return UserArticles.findAndCountAll().then(result => {
             console.log("Found " + result.count + "user's articles");
