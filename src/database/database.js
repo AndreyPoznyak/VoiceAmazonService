@@ -1,11 +1,8 @@
-const models = require("./models");
-
-const { sequelize, User, Article, UserArticles } = models;
+const { sequelize, User, Article, UserArticles } = require("./models");
 
 module.exports = {
-    syncDbSchema: () => {
-        sequelize.sync();
-    },
+
+    syncDbSchema: () => sequelize.sync(),
 
     saveUser: (info) => {
         return User.create({
