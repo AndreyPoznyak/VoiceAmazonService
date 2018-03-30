@@ -168,7 +168,9 @@ module.exports.getPocketArticles = (event, context, callback) => {
             console.log(articles);
 
             performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(articles));
-        }, () => {
+        }, error => {
+            console.log(error);
+
             performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Can't get articles from Pocket"));
         });
     });

@@ -13,6 +13,6 @@ module.exports = {
                 "access_token": accessToken,
                 "state": "all"
             })
-        }).then(response => response.ok ? response.json() : Promise.reject());
+        }).then(response => response.ok ? response.json() : Promise.reject(response));
     }
 };
