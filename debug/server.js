@@ -39,5 +39,4 @@ Object.keys(slsConfig.functions).forEach(name => {
     });
 });
 
-
 app.listen(port, () => console.log('Server launched!'));

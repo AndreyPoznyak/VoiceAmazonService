@@ -9,7 +9,12 @@ const User = sequelize.define("user", {
     firstName: Sequelize.STRING,
     lastName: Sequelize.STRING,
     avatarPath: Sequelize.STRING,
-    loginDate: Sequelize.DATE
+    facebookId: Sequelize.STRING,
+    googleId: Sequelize.STRING,
+    loginDate: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW
+    }
 });
 
 const Article = sequelize.define("article", {
