@@ -115,7 +115,6 @@ module.exports.addUser = (event, context, callback) => {
 module.exports.getAllArticles = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
-    //TODO: pass user's id and get relevant articles
     const info = event.queryStringParameters;
 
     console.log("Getting all articles request");
@@ -185,11 +184,8 @@ module.exports.addArticle = (event, context, callback) => {
     }
 
     syncDatabaseSchema(callback).then(() => {
-        database.getArticleWithUsers({
-                url: info.url
-            }, {
-                userId: info.userId
-            }).then(articleWithUsers => {
+        database.getArticleWithUsers({ url: info.url }, { userId: info.userId })
+            .then(articleWithUsers => {
                 if (articleWithUsers) {
                     if ((articleWithUsers.users || []).length !== 0) {
                         performRequestCallback(callback,

@@ -46,7 +46,6 @@ module.exports = {
         });
     },
 
-    //TODO: link with user
     saveArticle: (info) => {
         return Article.create({
             url: info.url,
