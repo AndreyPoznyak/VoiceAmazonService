@@ -14,7 +14,7 @@ const performRequestCallback = (callback, statusCode, body) => {
 
 let databaseWasSynced = false; //small optimization for the scope of the same process
 
-const syncDatabaseScheme = callback => {
+const syncDatabaseSchema = callback => {
     if (databaseWasSynced) {
         return Promise.resolve();
     }
@@ -23,7 +23,7 @@ const syncDatabaseScheme = callback => {
         databaseWasSynced = true;
     }, error => {
         console.log(error);
-        performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Can't sync database scheme."));
+        performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Can't sync database schema."));
     });
 };
 
@@ -34,7 +34,7 @@ module.exports.getAllUsers = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
     console.log("Getting all users request");
 
-    syncDatabaseScheme(callback).then(() => {
+    syncDatabaseSchema(callback).then(() => {
         database.getAllUsers().then(users => {
             performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(users));
         }, error => {
@@ -57,7 +57,7 @@ module.exports.getUser = (event, context, callback) => {
         return;
     }
 
-    syncDatabaseScheme(callback).then(() => {
+    syncDatabaseSchema(callback).then(() => {
         database.getUser(info.email).then(user => {
             if (user) {
                 performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(user));
@@ -85,7 +85,7 @@ module.exports.addUser = (event, context, callback) => {
         return;
     }
 
-    syncDatabaseScheme(callback).then(() => {
+    syncDatabaseSchema(callback).then(() => {
         database.getUser(info.email).then(user => {
             if (user) {
                 performRequestCallback(callback, Codes.BAD_REQUEST, JSON.stringify({
@@ -116,7 +116,7 @@ module.exports.getUserArticles = (event, context, callback) => {
 
     console.log("Getting all  user's articles request");
 
-    syncDatabaseScheme(callback).then(() => {
+    syncDatabaseSchema(callback).then(() => {
         database.getUserArticles().then(userArticles => {
             performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(userArticles));
         }, error => {
@@ -136,7 +136,7 @@ module.exports.getAllArticles = (event, context, callback) => {
 
     console.log("Getting all articles request");
 
-    syncDatabaseScheme(callback).then(() => {
+    syncDatabaseSchema(callback).then(() => {
         database.getAllArticles().then(articles => {
             performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(articles));
         }, error => {
@@ -163,7 +163,7 @@ module.exports.getPocketArticles = (event, context, callback) => {
         return;
     }
 
-    syncDatabaseScheme(callback).then(() => {
+    syncDatabaseSchema(callback).then(() => {
         pocketProvider.getArticles(info.consumerKey, info.accessToken).then(articles => {
             console.log(articles);
 
@@ -189,7 +189,7 @@ module.exports.addArticle = (event, context, callback) => {
         return;
     }
 
-    syncDatabaseScheme(callback).then(() => {
+    syncDatabaseSchema(callback).then(() => {
         database.getArticle({
             url: info.url
         }).then(article => {
