@@ -121,13 +121,24 @@ module.exports.getAllArticles = (event, context, callback) => {
     console.log("Getting all articles request");
 
     syncDatabaseSchema(callback).then(() => {
-        database.getAllArticles().then(articles => {
-            performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(articles));
-        }, error => {
-            console.log(error);
+        
+        if ((info || {}).userId) {
+            database.getAllUserArticles({ id: info.userId }, {}).then(userWithArticles => {
+                performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(userWithArticles.articles));
+            }, error => {
+                console.log(error);
 
-            performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Can't get articles from DB"));
-        });
+                performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Can't get articles from DB"));
+            });
+        } else {
+            database.getAllArticles().then(articles => {
+                performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(articles));
+            }, error => {
+                console.log(error);
+
+                performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Can't get articles from DB"));
+            });
+        }
     });
 };
 
@@ -186,11 +197,11 @@ module.exports.addArticle = (event, context, callback) => {
                             JSON.stringify({
                                 message: "Article has already been added and linked with user",
                                 userId: info.userId,
-                                article: article
+                                article: articleWithUsers
                             }));
                     } else {
                         //link existing article to user 
-                        database.linkArticleToUser(info.userId, articleWithUsers).then(result => {
+                        database.linkArticleToUser(info, articleWithUsers).then(result => {
                                 console.log(result);
                                 performRequestCallback(callback,
                                     Codes.CREATED,
@@ -199,15 +210,16 @@ module.exports.addArticle = (event, context, callback) => {
                                 console.log(error);
                                 performRequestCallback(callback,
                                     Codes.INTERNAL_ERROR,
-                                    wrapMessage("Error: Adding article to DB failed"));
+                                    wrapMessage("Error: Linking article to user failed"));
                             });
                     }
                 } else {
+                    //add new article and link to user
                     database.saveArticle(info).then(result => {
                             console.log(result);
                             performRequestCallback(callback,
                                 Codes.CREATED,
-                                wrapMessage("Successfully added article to DB"));
+                                wrapMessage("Successfully added article to DB and linked it to user"));
                         }, error => {
                             console.log(error);
                             performRequestCallback(callback,

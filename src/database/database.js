@@ -80,24 +80,29 @@ module.exports = {
         });
     },
 
-    //TODO: rewrite it
-    getAllUserArticles: () => {
-        return UserArticles.findAndCountAll().then(result => {
-            console.log("Found " + result.count + "user's articles");
-
-            return result.rows;
+    getAllUserArticles: (userWhere, articleWhere) => {
+        return User.findOne({
+            include: [
+                {
+                    model: Article,
+                    through: {
+                        where: articleWhere
+                    }
+                }
+            ],
+            where: userWhere
         });
     },
 
-    linkArticleToUser: (userId, article) => {
+    linkArticleToUser: (info, article) => {
         return User.findOne({
             where: {
-                id: userId
+                id: info.userId
             }
         }).then(user => {
             return user.addArticle(article, {
                     through: {
-                        externalSystemId: article.externalSystemId || null
+                        externalSystemId: info.externalSystemId || null
                     }
                 });
         });
