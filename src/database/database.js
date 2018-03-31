@@ -32,9 +32,17 @@ module.exports = {
     },
 
     //Articles
-    getArticle: (options) => {
+    getArticleWithUsers: (articleWhere, userWhere) => {
         return Article.findOne({
-            where: options
+            include: [
+                {
+                    model: User,
+                    through: {
+                        where: userWhere
+                    }
+                }
+            ],
+            where: articleWhere
         });
     },
 
@@ -47,6 +55,20 @@ module.exports = {
             text: info.text,
             pathToSpeech: info.pathToSpeech || null,
             timeAdded: info.timeAdded || null
+        }).then(addedArticle => {
+            User.findOne({
+                where: {
+                    id: info.userId
+                }
+            }).then(user => {
+                addedArticle.addUser(
+                    user, {
+                        through: {
+                            progress: 0,
+                            externalSystemId: info.externalSystemId || null
+                        }
+                    });
+            });
         });
     },
 
@@ -59,11 +81,25 @@ module.exports = {
     },
 
     //TODO: rewrite it
-    getUserArticles: () => {
+    getAllUserArticles: () => {
         return UserArticles.findAndCountAll().then(result => {
             console.log("Found " + result.count + "user's articles");
 
             return result.rows;
+        });
+    },
+
+    linkArticleToUser: (userId, article) => {
+        return User.findOne({
+            where: {
+                id: userId
+            }
+        }).then(user => {
+            return user.addArticle(article, {
+                    through: {
+                        externalSystemId: article.externalSystemId || null
+                    }
+                });
         });
     }
 };

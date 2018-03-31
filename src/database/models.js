@@ -22,7 +22,6 @@ const Article = sequelize.define("article", {
 });
 
 const UserArticles = sequelize.define("userArticles", {
-    progress: Sequelize.INTEGER,
     externalSystemId: Sequelize.STRING  //string maybe
 });
 

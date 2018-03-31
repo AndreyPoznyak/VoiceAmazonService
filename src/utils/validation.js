@@ -23,7 +23,8 @@ module.exports = {
         let success = true;
         let errorMessage = "";
 
-        if (!info || !info.title || !info.url) {
+        //userId is needed to link article with exact user
+        if (!info || !info.title || !info.url || !info.userId) {
             success = false;
             errorMessage = "No necessary data specified";
         } else if (!validator.isURL(info.url)) {

@@ -111,22 +111,6 @@ module.exports.addUser = (event, context, callback) => {
     });
 };
 
-module.exports.getUserArticles = (event, context, callback) => {
-    context.callbackWaitsForEmptyEventLoop = false;
-
-    console.log("Getting all  user's articles request");
-
-    syncDatabaseSchema(callback).then(() => {
-        database.getUserArticles().then(userArticles => {
-            performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(userArticles));
-        }, error => {
-            console.log(error);
-
-            performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Can't get user's articles from DB"));
-        });
-    });
-};
-
 //Articles API
 module.exports.getAllArticles = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
@@ -190,26 +174,52 @@ module.exports.addArticle = (event, context, callback) => {
     }
 
     syncDatabaseSchema(callback).then(() => {
-        database.getArticle({
-            url: info.url
-        }).then(article => {
-            if (article) {
-                performRequestCallback(callback, Codes.BAD_REQUEST, JSON.stringify({
-                    message: "Article has already been added",
-                    article: article
-                }));
-            } else {
-                database.saveArticle(info).then(result => {
-                    console.log(result);
-                    performRequestCallback(callback, Codes.CREATED, wrapMessage("Successfully added article to DB"));
-                }, error => {
-                    console.log(error);
-                    performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Adding article to DB failed"));
-                });
-            }
-        }, error => {
-            console.log(error);
-            performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Not able to check article's presence in DB"));
-        });
+        database.getArticleWithUsers({
+                url: info.url
+            }, {
+                userId: info.userId
+            }).then(articleWithUsers => {
+                if (articleWithUsers) {
+                    if ((articleWithUsers.users || []).length !== 0) {
+                        performRequestCallback(callback,
+                            Codes.BAD_REQUEST,
+                            JSON.stringify({
+                                message: "Article has already been added and linked with user",
+                                userId: info.userId,
+                                article: article
+                            }));
+                    } else {
+                        //link existing article to user 
+                        database.linkArticleToUser(info.userId, articleWithUsers).then(result => {
+                                console.log(result);
+                                performRequestCallback(callback,
+                                    Codes.CREATED,
+                                    wrapMessage("Existing article successfully linked to user"));
+                            }, error => {
+                                console.log(error);
+                                performRequestCallback(callback,
+                                    Codes.INTERNAL_ERROR,
+                                    wrapMessage("Error: Adding article to DB failed"));
+                            });
+                    }
+                } else {
+                    database.saveArticle(info).then(result => {
+                            console.log(result);
+                            performRequestCallback(callback,
+                                Codes.CREATED,
+                                wrapMessage("Successfully added article to DB"));
+                        }, error => {
+                            console.log(error);
+                            performRequestCallback(callback,
+                                Codes.INTERNAL_ERROR,
+                                wrapMessage("Error: Adding article to DB failed"));
+                        });
+                }
+            }, error => {
+                console.log(error);
+                performRequestCallback(callback,
+                    Codes.INTERNAL_ERROR,
+                    wrapMessage("Error: Not able to check article's presence in DB"));
+            });
     });
 };
