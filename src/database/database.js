@@ -3,8 +3,10 @@ const { sequelize, User, Article, UserArticles } = require("./models");
 module.exports = {
 
     syncDbSchema: () => sequelize.sync(),
+    //syncDbSchema: () => sequelize.sync({ force: true }),
 
     saveUser: (info) => {
+        //loginDate is now by default
         return User.create({
             email: info.email,
             avatarPath: info.avatarPath || null,
@@ -29,6 +31,16 @@ module.exports = {
                 email
             }
         });
+    },
+
+    updateUsersLoginDate: (user) => {
+        const now = Date.now();
+
+        console.log(`Updating user ${user.id} login date from ${user.loginDate} to ${now}`);
+
+        user.loginDate = now;
+
+        return user.save();
     },
 
     //Articles

@@ -88,24 +88,28 @@ module.exports.addUser = (event, context, callback) => {
     syncDatabaseSchema(callback).then(() => {
         database.getUser(info.email).then(user => {
             if (user) {
-                performRequestCallback(callback, Codes.BAD_REQUEST, JSON.stringify({
-                    message: "User has already been registered",
-                    user: user
-                }));
+                database.updateUsersLoginDate(user).then(() => {
+                    performRequestCallback(callback, Codes.BAD_REQUEST, JSON.stringify({
+                        message: "User has already been registered",
+                        user: user
+                    }));
+                }, error => {
+                    console.log(error);
+                    performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Not able to update user's login date"));
+                });
             } else {
-                database.saveUser(info).then(result => {
-                    console.log(result);
-
+                database.saveUser(info).then(savedUser => {
                     performRequestCallback(callback, Codes.CREATED, JSON.stringify({
                         message: "Successfully added user to DB",
-                        user: result
+                        user: savedUser
                     }));
                 }, error => {
                     console.log(error);
                     performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Adding user to DB failed"));
                 });
             }
-        }, () => {
+        }, error => {
+            console.log(error);
             performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Not able to check user's presence in DB"));
         });
     });
