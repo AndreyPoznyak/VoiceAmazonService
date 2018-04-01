@@ -6,10 +6,7 @@ const Codes = require("../constants/httpCodes");
 const wrapMessage = message => JSON.stringify({ message });
 
 const performRequestCallback = (callback, statusCode, body) => {
-    callback(null, {
-        statusCode,
-        body
-    });
+    callback(null, {statusCode,body});
 };
 
 let databaseWasSynced = false; //small optimization for the scope of the same process
@@ -26,6 +23,48 @@ const syncDatabaseSchema = callback => {
         performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Can't sync database schema."));
     });
 };
+
+const handleArticle = (info) => {
+    return database.getArticleWithUsers(info.url, info.userId)
+        .then(articleWithUsers => {
+            let result = null;
+            if (articleWithUsers) {
+                if ((articleWithUsers.users || []).length !== 0) {
+                    result = {
+                        message: "Article has already been added and linked with user"
+                    };
+                } else {
+                    //link existing article to user 
+                    result = database
+                        .linkArticleToUser(info, articleWithUsers)
+                        .then(result => {
+                            return { message: "Existing article successfully linked to user" };
+                        })
+                        .catch(error => {
+                            console.log(error);
+                            return { message: "Error: Linking article to user failed" };
+                        });
+                }
+            } else {
+                //add new article and link to user
+                result = database
+                    .saveArticle(info)
+                    .then(result => {
+                        return { message: "Successfully added article to DB and linked it to user" };
+                    })
+                    .catch(error => {
+                        console.log(error);
+                        return { message: "Error: Adding article to DB failed" };
+                    });
+            }
+
+            return result;
+        })
+        .catch(error => {
+            console.log(error);
+            return { message: "Error: Not able to check article's presence in DB" };
+        });
+}
 
 //NOTE: event Contains incoming request data (e.g., query params, headers and more)
 
@@ -174,64 +213,40 @@ module.exports.getPocketArticles = (event, context, callback) => {
     });
 };
 
-module.exports.addArticle = (event, context, callback) => {
+module.exports.addArticles = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
-    const info = JSON.parse(event.body);
-    const validationResult = validator.isArticleParamsSufficient(info);
+    const articles = JSON.parse(event.body);
 
-    console.log("Adding article with these params: ", info);
+    (articles || []).forEach(article => {
+        const validationResult = validator.isArticleParamsSufficient(article);
 
-    if (!validationResult.success) {
-        performRequestCallback(callback, Codes.BAD_REQUEST, wrapMessage(`Error: ${validationResult.message}`));
-        return;
-    }
+        console.log("Adding article with these params: ", article);
 
-    syncDatabaseSchema(callback).then(() => {
-        database.getArticleWithUsers({ url: info.url }, { userId: info.userId })
-            .then(articleWithUsers => {
-                if (articleWithUsers) {
-                    if ((articleWithUsers.users || []).length !== 0) {
-                        performRequestCallback(callback,
-                            Codes.BAD_REQUEST,
-                            JSON.stringify({
-                                message: "Article has already been added and linked with user",
-                                userId: info.userId,
-                                article: articleWithUsers
-                            }));
-                    } else {
-                        //link existing article to user 
-                        database.linkArticleToUser(info, articleWithUsers).then(result => {
-                                console.log(result);
-                                performRequestCallback(callback,
-                                    Codes.CREATED,
-                                    wrapMessage("Existing article successfully linked to user"));
-                            }, error => {
-                                console.log(error);
-                                performRequestCallback(callback,
-                                    Codes.INTERNAL_ERROR,
-                                    wrapMessage("Error: Linking article to user failed"));
-                            });
-                    }
-                } else {
-                    //add new article and link to user
-                    database.saveArticle(info).then(result => {
-                            console.log(result);
-                            performRequestCallback(callback,
-                                Codes.CREATED,
-                                wrapMessage("Successfully added article to DB and linked it to user"));
-                        }, error => {
-                            console.log(error);
-                            performRequestCallback(callback,
-                                Codes.INTERNAL_ERROR,
-                                wrapMessage("Error: Adding article to DB failed"));
-                        });
-                }
-            }, error => {
-                console.log(error);
-                performRequestCallback(callback,
-                    Codes.INTERNAL_ERROR,
-                    wrapMessage("Error: Not able to check article's presence in DB"));
-            });
+        if (!validationResult.success) {
+            performRequestCallback(callback, Codes.BAD_REQUEST, wrapMessage(`Error: ${validationResult.message}`));
+            return;
+        }
     });
+
+    syncDatabaseSchema(callback)
+        .then(() => {
+            //hanlde articles synchronously one by one
+            const messages = [];
+            (articles || []).reduce((promise, item) => {
+                return promise.then(_ => {
+                    return handleArticle(item).then(data => {
+                        messages.push(data.message);
+                        return data;
+                    });
+                });
+            }, Promise.resolve())
+                .then(response => {
+                    callback(null,
+                        {
+                            statusCode: Codes.CREATED,
+                            body: messages
+                        });
+                });
+        });
 };

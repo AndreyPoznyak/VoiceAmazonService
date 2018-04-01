@@ -65,7 +65,7 @@ functions:
           cors: true
   #Articles API
   addArticle:
-    handler: src/api/api.addArticle
+    handler: src/api/api.addArticles
     events:
       - http:
           path: articles

@@ -44,17 +44,17 @@ module.exports = {
     },
 
     //Articles
-    getArticleWithUsers: (articleWhere, userWhere) => {
+    getArticleWithUsers: (articleUrl, userId) => {
         return Article.findOne({
             include: [
                 {
                     model: User,
                     through: {
-                        where: userWhere
+                        where: {userId: userId }
                     }
                 }
             ],
-            where: articleWhere
+            where: { url: articleUrl }
         });
     },
 
@@ -112,10 +112,10 @@ module.exports = {
             }
         }).then(user => {
             return user.addArticle(article, {
-                    through: {
-                        externalSystemId: info.externalSystemId || null
-                    }
-                });
+                through: {
+                    externalSystemId: info.externalSystemId || null
+                }
+            });
         });
     }
 };
