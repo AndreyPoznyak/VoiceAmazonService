@@ -75,7 +75,6 @@ module.exports = {
                 addedArticle.addUser(
                     user, {
                         through: {
-                            progress: 0,
                             externalSystemId: info.externalSystemId || null
                         }
                     });
