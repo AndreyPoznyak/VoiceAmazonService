@@ -36,7 +36,7 @@ module.exports.getAllUsers = (event, context, callback) => {
 
     syncDatabaseScheme(callback).then(() => {
         database.getAllUsers().then(users => {
-            performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(users));
+            performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(users, null, 4));
         }, error => {
             console.log(error);
             performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Can't get users from DB"));
@@ -142,7 +142,7 @@ module.exports.getAllArticles = (event, context, callback) => {
 
     syncDatabaseScheme(callback).then(() => {
         database.getAllArticles().then(articles => {
-            performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(articles));
+            performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(articles, null, 4));
         }, error => {
             console.log(error);
 
@@ -171,7 +171,7 @@ module.exports.getPocketArticles = (event, context, callback) => {
         pocketProvider.getArticles(info.consumerKey, info.accessToken).then(articles => {
             console.log(articles);
 
-            performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(articles));
+            performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(articles, null, 4));
         }, error => {
             console.log(error);
 
