@@ -23,6 +23,7 @@ module.exports = {
         let success = true;
         let errorMessage = "";
 
+        //userId is needed to link article with exact user
         if (!info || !info.title || !info.url) {
             success = false;
             errorMessage = "No necessary data specified";

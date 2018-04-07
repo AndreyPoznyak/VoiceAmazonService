@@ -2,19 +2,14 @@ const database = require("../database/database");
 const pocketProvider = require("../providers/pocket");
 const validator = require("../utils/validation");
 const Codes = require("../constants/httpCodes");
+const helper = require("../utils/helper");
+const articleService = require("../services/articleService");
 
-const wrapMessage = message => JSON.stringify({ message });
-
-const performRequestCallback = (callback, statusCode, body) => {
-    callback(null, {
-        statusCode,
-        body
-    });
-};
+const performRequestCallback = (callback, statusCode, body) => callback(null, { statusCode, body: JSON.stringify(body, null, 4) });
 
 let databaseWasSynced = false; //small optimization for the scope of the same process
 
-const syncDatabaseScheme = callback => {
+const syncDatabaseSchema = callback => {
     if (databaseWasSynced) {
         return Promise.resolve();
     }
@@ -23,7 +18,7 @@ const syncDatabaseScheme = callback => {
         databaseWasSynced = true;
     }, error => {
         console.log(error);
-        performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Can't sync database scheme."));
+        performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't sync database schema.");
     });
 };
 
@@ -34,12 +29,12 @@ module.exports.getAllUsers = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
     console.log("Getting all users request");
 
-    syncDatabaseScheme(callback).then(() => {
+    syncDatabaseSchema(callback).then(() => {
         database.getAllUsers().then(users => {
-            performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(users, null, 4));
+            performRequestCallback(callback, Codes.SUCCESS, users);
         }, error => {
             console.log(error);
-            performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Can't get users from DB"));
+            performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't get users from DB");
         });
     });
 };
@@ -53,21 +48,21 @@ module.exports.getUser = (event, context, callback) => {
     console.log("Getting user with these params:", info);
 
     if (!validationResult.success) {
-        performRequestCallback(callback, Codes.BAD_REQUEST, wrapMessage(`Error: ${validationResult.message}`));
+        performRequestCallback(callback, Codes.BAD_REQUEST, `Error: ${validationResult.message}`);
         return;
     }
 
-    syncDatabaseScheme(callback).then(() => {
+    syncDatabaseSchema(callback).then(() => {
         database.getUser(info.email).then(user => {
             if (user) {
-                performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(user));
+                performRequestCallback(callback, Codes.SUCCESS, user);
             } else {
-                performRequestCallback(callback, Codes.NOT_FOUND, wrapMessage(`User with email ${info.email} is not found`));
+                performRequestCallback(callback, Codes.NOT_FOUND, `User with email ${info.email} is not found`);
             }
         }, error => {
             console.log(error);
 
-            performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Getting the user failed"));
+            performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Getting the user failed");
         });
     });
 };
@@ -81,52 +76,36 @@ module.exports.addUser = (event, context, callback) => {
     console.log(`Adding user with these params: `, info);
 
     if (!validationResult.success) {
-        performRequestCallback(callback, Codes.BAD_REQUEST, wrapMessage(`Error: ${validationResult.message}`));
+        performRequestCallback(callback, Codes.BAD_REQUEST, `Error: ${validationResult.message}`);
         return;
     }
 
-    syncDatabaseScheme(callback).then(() => {
+    syncDatabaseSchema(callback).then(() => {
         database.getUser(info.email).then(user => {
             if (user) {
                 database.updateUsersLoginDate(user).then(() => {
-                    performRequestCallback(callback, Codes.BAD_REQUEST, JSON.stringify({
+                    performRequestCallback(callback, Codes.BAD_REQUEST, {
                         message: "User has already been registered",
                         user: user
-                    }));
+                    });
                 }, error => {
                     console.log(error);
-                    performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Not able to update user's login date"));
+                    performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Not able to update user's login date");
                 });
             } else {
                 database.saveUser(info).then(savedUser => {
-                    performRequestCallback(callback, Codes.CREATED, JSON.stringify({
+                    performRequestCallback(callback, Codes.CREATED, {
                         message: "Successfully added user to DB",
                         user: savedUser
-                    }));
+                    });
                 }, error => {
                     console.log(error);
-                    performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Adding user to DB failed"));
+                    performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Adding user to DB failed");
                 });
             }
         }, error => {
             console.log(error);
-            performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Not able to check user's presence in DB"));
-        });
-    });
-};
-
-module.exports.getUserArticles = (event, context, callback) => {
-    context.callbackWaitsForEmptyEventLoop = false;
-
-    console.log("Getting all  user's articles request");
-
-    syncDatabaseScheme(callback).then(() => {
-        database.getUserArticles().then(userArticles => {
-            performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(userArticles));
-        }, error => {
-            console.log(error);
-
-            performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Can't get user's articles from DB"));
+            performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Not able to check user's presence in DB");
         });
     });
 };
@@ -135,19 +114,29 @@ module.exports.getUserArticles = (event, context, callback) => {
 module.exports.getAllArticles = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
-    //TODO: pass user's id and get relevant articles
     const info = event.queryStringParameters;
 
     console.log("Getting all articles request");
 
-    syncDatabaseScheme(callback).then(() => {
-        database.getAllArticles().then(articles => {
-            performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(articles, null, 4));
-        }, error => {
-            console.log(error);
+    syncDatabaseSchema(callback).then(() => {
 
-            performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Can't get articles from DB"));
-        });
+        if (info && info.userId) {
+            database.getAllUserArticles({ id: info.userId }, {}).then(userWithArticles => {
+                performRequestCallback(callback, Codes.SUCCESS, userWithArticles.articles);
+            }, error => {
+                console.log(error);
+
+                performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't get articles from DB");
+            });
+        } else {
+            database.getAllArticles().then(articles => {
+                performRequestCallback(callback, Codes.SUCCESS, articles);
+            }, error => {
+                console.log(error);
+
+                performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't get articles from DB");
+            });
+        }
     });
 };
 
@@ -163,57 +152,55 @@ module.exports.getPocketArticles = (event, context, callback) => {
 
     //TODO: move it somehow not to duplicate the code
     if (!validationResult.success) {
-        performRequestCallback(callback, Codes.BAD_REQUEST, wrapMessage(`Error: ${validationResult.message}`));
+        performRequestCallback(callback, Codes.BAD_REQUEST, `Error: ${validationResult.message}`);
         return;
     }
 
-    syncDatabaseScheme(callback).then(() => {
+    syncDatabaseSchema(callback).then(() => {
         pocketProvider.getArticles(info.consumerKey, info.accessToken).then(articles => {
             console.log(articles);
 
-            performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(articles, null, 4));
+            performRequestCallback(callback, Codes.SUCCESS, articles);
         }, error => {
             console.log(error);
 
-            performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Can't get articles from Pocket"));
+            performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't get articles from Pocket");
         });
     });
 };
 
-module.exports.addArticle = (event, context, callback) => {
+module.exports.addArticles = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
-    const info = JSON.parse(event.body);
-    const validationResult = validator.isArticleParamsSufficient(info);
+    var body = JSON.parse(event.body);
 
-    console.log("Adding article with these params: ", info);
+    syncDatabaseSchema(callback)
+        .then(() => {
+            var articlePromises = [];
 
-    if (!validationResult.success) {
-        performRequestCallback(callback, Codes.BAD_REQUEST, wrapMessage(`Error: ${validationResult.message}`));
-        return;
-    }
+            if (body && body.articles && body.userId) {
+                var articles = helper.removeDuplicatesByUniqueKey(body.articles, 'url');
+                articles.forEach(article => {
+                    const validationResult = validator.isArticleParamsSufficient(article);
 
-    syncDatabaseScheme(callback).then(() => {
-        database.getArticle({
-            url: info.url
-        }).then(article => {
-            if (article) {
-                performRequestCallback(callback, Codes.BAD_REQUEST, JSON.stringify({
-                    message: "Article has already been added",
-                    article: article
-                }));
-            } else {
-                database.saveArticle(info).then(result => {
-                    console.log(result);
-                    performRequestCallback(callback, Codes.CREATED, wrapMessage("Successfully added article to DB"));
-                }, error => {
-                    console.log(error);
-                    performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Adding article to DB failed"));
+                    if (validationResult.success) {
+                        console.log("Adding article with these params: ", article);
+                        articlePromises.push(articleService.handleArticleCreation(body.userId, article))
+                    } else {
+                        console.log("Validation error has been occured for article: ", article);
+                        articlePromises.push(Promise.resolve({ message: `Error: ${validationResult.message}` }))
+                    }
                 });
+            } else {
+                performRequestCallback(callback, Codes.BAD_REQUEST, `Error: invalid input model`);
             }
-        }, error => {
-            console.log(error);
-            performRequestCallback(callback, Codes.INTERNAL_ERROR, wrapMessage("Error: Not able to check article's presence in DB"));
+
+            Promise.all(articlePromises)
+                .then(responses => {
+                    performRequestCallback(callback, Codes.CREATED, responses.map(response => response.message));
+                })
+                .catch(error => {
+                    performRequestCallback(callback, Codes.INTERNAL_ERROR, error);
+                });
         });
-    });
 };

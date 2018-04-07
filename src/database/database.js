@@ -44,21 +44,41 @@ module.exports = {
     },
 
     //Articles
-    getArticle: (options) => {
+    getArticleUserRelation: (articleUrl, userId) => {
         return Article.findOne({
-            where: options
+            include: [
+                {
+                    model: User,
+                    through: {
+                        where: { userId: userId }
+                    }
+                }
+            ],
+            where: { url: articleUrl }
         });
     },
 
-    //TODO: link with user
-    saveArticle: (info) => {
+    saveArticle: (userInfo, article) => {
         return Article.create({
-            url: info.url,
-            title: info.title,
-            language: info.language || null,
-            text: info.text,
-            pathToSpeech: info.pathToSpeech || null,
-            timeAdded: info.timeAdded || null
+            url: article.url,
+            title: article.title,
+            language: article.language || null,
+            text: article.text,
+            pathToSpeech: article.pathToSpeech || null,
+            timeAdded: article.timeAdded || null
+        }).then(addedArticle => {
+            User.findOne({
+                where: {
+                    id: userInfo.userId
+                }
+            }).then(user => {
+                addedArticle.addUser(
+                    user, {
+                        through: {
+                            externalSystemId: userInfo.externalSystemId || null
+                        }
+                    });
+            });
         });
     },
 
@@ -70,12 +90,31 @@ module.exports = {
         });
     },
 
-    //TODO: rewrite it
-    getUserArticles: () => {
-        return UserArticles.findAndCountAll().then(result => {
-            console.log("Found " + result.count + "user's articles");
+    getAllUserArticles: (userWhere, articleWhere) => {
+        return User.findOne({
+            include: [
+                {
+                    model: Article,
+                    through: {
+                        where: articleWhere
+                    }
+                }
+            ],
+            where: userWhere
+        });
+    },
 
-            return result.rows;
+    linkArticleToUser: (info, article) => {
+        return User.findOne({
+            where: {
+                id: info.userId
+            }
+        }).then(user => {
+            return user.addArticle(article, {
+                through: {
+                    externalSystemId: info.externalSystemId || null
+                }
+            });
         });
     }
 };

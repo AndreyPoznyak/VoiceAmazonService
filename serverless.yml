@@ -63,16 +63,9 @@ functions:
           path: user
           method: post
           cors: true
-  getUserArticles:
-    handler: src/api/api.getUserArticles
-    events:
-      - http:
-          path: user/articles
-          method: get
-          cors: true
   #Articles API
   addArticle:
-    handler: src/api/api.addArticle
+    handler: src/api/api.addArticles
     events:
       - http:
           path: articles
