@@ -5,9 +5,21 @@ const Codes = require("../constants/httpCodes");
 
 const wrapMessage = message => JSON.stringify({ message });
 
-const performRequestCallback = (callback, statusCode, body) => {
-    callback(null, {statusCode,body});
-};
+const performRequestCallback = (callback, statusCode, body) => callback(null, {statusCode, body});
+
+const removeDuplicatesByUniqueKey = (originalArray, prop) => {
+    var newArray = [];
+    var lookupObject = {};
+
+    for (var i in originalArray) {
+        lookupObject[originalArray[i][prop]] = originalArray[i];
+    }
+
+    for (i in lookupObject) {
+        newArray.push(lookupObject[i]);
+    }
+    return newArray;
+}
 
 let databaseWasSynced = false; //small optimization for the scope of the same process
 
@@ -29,9 +41,9 @@ const handleArticle = (info) => {
         .then(articleWithUsers => {
             let result = null;
             if (articleWithUsers) {
-                if ((articleWithUsers.users || []).length !== 0) {
+                if (articleWithUsers.users && articleWithUsers.users.length !== 0) {
                     result = {
-                        message: "Article has already been added and linked with user"
+                        message: "Article has already been added and linked to user"
                     };
                 } else {
                     //link existing article to user 
@@ -164,7 +176,7 @@ module.exports.getAllArticles = (event, context, callback) => {
 
     syncDatabaseSchema(callback).then(() => {
         
-        if ((info || {}).userId) {
+        if (info && info.userId) {
             database.getAllUserArticles({ id: info.userId }, {}).then(userWithArticles => {
                 performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(userWithArticles.articles));
             }, error => {
@@ -216,37 +228,43 @@ module.exports.getPocketArticles = (event, context, callback) => {
 module.exports.addArticles = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
-    const articles = JSON.parse(event.body);
+    var articles = JSON.parse(event.body);
 
-    (articles || []).forEach(article => {
-        const validationResult = validator.isArticleParamsSufficient(article);
+    if (articles) {
+        articles = removeDuplicatesByUniqueKey(articles, 'url');
+        articles.forEach(article => {
+            const validationResult = validator.isArticleParamsSufficient(article);
 
-        console.log("Adding article with these params: ", article);
+            console.log("Adding article with these params: ", article);
 
-        if (!validationResult.success) {
-            performRequestCallback(callback, Codes.BAD_REQUEST, wrapMessage(`Error: ${validationResult.message}`));
-            return;
-        }
-    });
+            if (!validationResult.success) {
+                performRequestCallback(callback, Codes.BAD_REQUEST, wrapMessage(`Error: ${validationResult.message}`));
+                return;
+            }
+        });
+    }
 
     syncDatabaseSchema(callback)
         .then(() => {
-            //hanlde articles synchronously one by one
-            const messages = [];
-            (articles || []).reduce((promise, item) => {
-                return promise.then(_ => {
-                    return handleArticle(item).then(data => {
-                        messages.push(data.message);
-                        return data;
-                    });
-                });
-            }, Promise.resolve())
-                .then(response => {
-                    callback(null,
-                        {
-                            statusCode: Codes.CREATED,
-                            body: messages
-                        });
+
+            var articlePromises = [];
+            for (var i = 0; i < articles.length; i++) {
+                articlePromises.push(handleArticle(articles[i]))
+            }
+
+            Promise.all(articlePromises)
+                .then(responses => {
+                    console.log(responses.map(response => {
+                        return response.message;
+                    }))
+                    performRequestCallback(callback, Codes.CREATED,
+                        JSON.stringify(responses.map(response => {
+                            return response.message;
+                        }))
+                    );
+                })
+                .catch(error => {
+                    performRequestCallback(callback, Codes.INTERNAL_ERROR, JSON.stringify(error));
                 });
         });
 };
