@@ -44,13 +44,13 @@ module.exports = {
     },
 
     //Articles
-    getArticleWithUsers: (articleUrl, userId) => {
+    getArticleUserRelation: (articleUrl, userId) => {
         return Article.findOne({
             include: [
                 {
                     model: User,
                     through: {
-                        where: {userId: userId }
+                        where: { userId: userId }
                     }
                 }
             ],
@@ -58,24 +58,24 @@ module.exports = {
         });
     },
 
-    saveArticle: (info) => {
+    saveArticle: (userInfo, article) => {
         return Article.create({
-            url: info.url,
-            title: info.title,
-            language: info.language || null,
-            text: info.text,
-            pathToSpeech: info.pathToSpeech || null,
-            timeAdded: info.timeAdded || null
+            url: article.url,
+            title: article.title,
+            language: article.language || null,
+            text: article.text,
+            pathToSpeech: article.pathToSpeech || null,
+            timeAdded: article.timeAdded || null
         }).then(addedArticle => {
             User.findOne({
                 where: {
-                    id: info.userId
+                    id: userInfo.userId
                 }
             }).then(user => {
                 addedArticle.addUser(
                     user, {
                         through: {
-                            externalSystemId: info.externalSystemId || null
+                            externalSystemId: userInfo.externalSystemId || null
                         }
                     });
             });

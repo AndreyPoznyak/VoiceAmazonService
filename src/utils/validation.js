@@ -24,7 +24,7 @@ module.exports = {
         let errorMessage = "";
 
         //userId is needed to link article with exact user
-        if (!info || !info.title || !info.url || !info.userId) {
+        if (!info || !info.title || !info.url) {
             success = false;
             errorMessage = "No necessary data specified";
         } else if (!validator.isURL(info.url)) {
