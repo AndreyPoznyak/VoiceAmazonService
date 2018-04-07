@@ -5,10 +5,11 @@ module.exports = {
         return database.getArticleUserRelation(article.url, userId)
             .then(articleUserRelation => {
                 let result = null;
-                var userInfo = {
+                let userInfo = {
                     userId: userId,
                     externalSystemId: article.externalSystemId
                 };
+
                 if (articleUserRelation) {
                     if (articleUserRelation.users.length !== 0) {
                         result = {
@@ -19,7 +20,7 @@ module.exports = {
 
                         result = database
                             .linkArticleToUser(userInfo, articleUserRelation)
-                            .then(result => {
+                            .then(() => {
                                 return { message: "Existing article successfully linked to user" };
                             })
                             .catch(error => {

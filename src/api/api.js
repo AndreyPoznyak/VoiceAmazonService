@@ -83,14 +83,14 @@ module.exports.addUser = (event, context, callback) => {
     syncDatabaseSchema(callback).then(() => {
         database.getUser(info.email).then(user => {
             if (user) {
-                database.updateUsersLoginDate(user).then(() => {
+                database.makeUsersInfoUpToUpdate(user, info).then(() => {
                     performRequestCallback(callback, Codes.BAD_REQUEST, {
                         message: "User has already been registered",
                         user: user
                     });
                 }, error => {
                     console.log(error);
-                    performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Not able to update user's login date");
+                    performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Not able to update user's login date and other params");
                 });
             } else {
                 database.saveUser(info).then(savedUser => {
@@ -121,8 +121,8 @@ module.exports.getAllArticles = (event, context, callback) => {
     syncDatabaseSchema(callback).then(() => {
 
         if (info && info.userId) {
-            database.getAllUserArticles({ id: info.userId }, {}).then(userWithArticles => {
-                performRequestCallback(callback, Codes.SUCCESS, userWithArticles.articles);
+            database.getAllUserArticles({ id: info.userId }, {}).then(usersArticles => {
+                performRequestCallback(callback, Codes.SUCCESS, usersArticles.articles);
             }, error => {
                 console.log(error);
 

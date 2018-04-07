@@ -10,6 +10,7 @@ module.exports = {
         for (i in lookupObject) {
             newArray.push(lookupObject[i]);
         }
+
         return newArray;
     }
 }

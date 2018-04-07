@@ -33,12 +33,32 @@ module.exports = {
         });
     },
 
-    updateUsersLoginDate: (user) => {
+    makeUsersInfoUpToUpdate: (user, info) => {
         const now = Date.now();
 
         console.log(`Updating user ${user.id} login date from ${user.loginDate} to ${now}`);
 
         user.loginDate = now;
+
+        if (info.name && !user.name) {
+            user.name = info.name;
+        }
+
+        if (info.firstName && !user.firstName) {
+            user.firstName = info.firstName;
+        }
+
+        if (info.lastName && !user.lastName) {
+            user.lastName = info.lastName;
+        }
+
+        if (info.facebookId && !user.facebookId) {
+            user.facebookId = info.facebookId;
+        }
+
+        if (info.googleId && !user.googleId) {
+            user.googleId = info.googleId;
+        }
 
         return user.save();
     },
