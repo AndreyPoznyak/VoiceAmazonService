@@ -5,7 +5,7 @@ const Codes = require("../constants/httpCodes");
 
 const wrapMessage = message => JSON.stringify({ message });
 
-const performRequestCallback = (callback, statusCode, body) => callback(null, {statusCode, body});
+const performRequestCallback = (callback, statusCode, body) => callback(null, { statusCode, body });
 
 const removeDuplicatesByUniqueKey = (originalArray, prop) => {
     var newArray = [];
@@ -46,7 +46,7 @@ const handleArticle = (info) => {
                         message: "Article has already been added and linked to user"
                     };
                 } else {
-                    //link existing article to user 
+                    //link existing article to user
                     result = database
                         .linkArticleToUser(info, articleWithUsers)
                         .then(result => {
@@ -175,7 +175,7 @@ module.exports.getAllArticles = (event, context, callback) => {
     console.log("Getting all articles request");
 
     syncDatabaseSchema(callback).then(() => {
-        
+
         if (info && info.userId) {
             database.getAllUserArticles({ id: info.userId }, {}).then(userWithArticles => {
                 performRequestCallback(callback, Codes.SUCCESS, JSON.stringify(userWithArticles.articles, null, 4));
