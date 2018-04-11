@@ -158,8 +158,6 @@ module.exports.getPocketArticles = (event, context, callback) => {
 
     syncDatabaseSchema(callback).then(() => {
         pocketProvider.getArticles(info.consumerKey, info.accessToken).then(articles => {
-            console.log(articles);
-
             performRequestCallback(callback, Codes.SUCCESS, articles);
         }, error => {
             console.log(error);
