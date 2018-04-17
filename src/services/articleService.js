@@ -32,7 +32,7 @@ module.exports = {
                     //add new article and link to user
                     result = database
                         .saveArticle(userInfo, article)
-                        .then(result => {
+                        .then(() => {
                             return { message: "Successfully added article to DB and linked it to user" };
                         })
                         .catch(error => {
@@ -47,6 +47,16 @@ module.exports = {
                 console.log(error);
                 return { message: "Error: Not able to check article's presence in DB" };
             });
+    },
+
+    isTextSaved: url => {
+        return database.getArticle(url).then(article => {
+            return !!article.text
+        }).catch(error => {
+            console.log(error);
+
+            return { message: "Not able to get the article from DB" }
+        });
     }
-}
+};
 

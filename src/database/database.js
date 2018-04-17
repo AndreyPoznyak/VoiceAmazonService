@@ -66,14 +66,12 @@ module.exports = {
     //Articles
     getArticleUserRelation: (articleUrl, userId) => {
         return Article.findOne({
-            include: [
-                {
-                    model: User,
-                    through: {
-                        where: { userId: userId }
-                    }
+            include: [{
+                model: User,
+                through: {
+                    where: { userId: userId }
                 }
-            ],
+            }],
             where: { url: articleUrl }
         });
     },
@@ -92,12 +90,11 @@ module.exports = {
                     id: userInfo.userId
                 }
             }).then(user => {
-                addedArticle.addUser(
-                    user, {
-                        through: {
-                            externalSystemId: userInfo.externalSystemId || null
-                        }
-                    });
+                addedArticle.addUser(user, {
+                    through: {
+                        externalSystemId: userInfo.externalSystemId || null
+                    }
+                });
             });
         });
     },
@@ -110,6 +107,15 @@ module.exports = {
         });
     },
 
+    getArticle: url => {
+        return Article.findOne({
+            where: {
+                url
+            }
+        });
+    },
+
+    //TODO: rename this method
     getAllUserArticles: (userWhere, articleWhere) => {
         return User.findOne({
             include: [
