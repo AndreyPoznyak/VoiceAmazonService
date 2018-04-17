@@ -167,6 +167,24 @@ module.exports.getPocketArticles = (event, context, callback) => {
     });
 };
 
+//TODO: save the text and then check its exestance + map to user - pass userId
+module.exports.getArticlesContent = (event, context, callback) => {
+    context.callbackWaitsForEmptyEventLoop = false;
+
+    const info = event.queryStringParameters;
+
+    //syncDatabaseSchema(callback).then(() => {
+        pocketProvider.getContent(info.url).then(result => {
+            performRequestCallback(callback, Codes.SUCCESS, result);
+        }, error => {
+            console.log(error);
+
+            performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't get parsed article's text from Pocket");
+        });
+    //});
+};
+
+//TODO: moybe remove it at all since getting content will be called anyway
 module.exports.addArticles = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 

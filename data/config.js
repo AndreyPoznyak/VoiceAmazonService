@@ -6,5 +6,8 @@ module.exports = {
         database: 'voice',
         password: 'postgrespassword',
         port: 5432
+    },
+    pocket: {
+        consumerKey: '63497-a7f14af78faac366dd755311'
     }
 };
