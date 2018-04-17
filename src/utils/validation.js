@@ -42,7 +42,7 @@ module.exports = {
         let success = true;
         let errorMessage = "";
 
-        if (!info || !info.consumerKey || !info.accessToken) {
+        if (!info || !info.consumerKey || !info.accessToken || info.userId) {
             success = false;
             errorMessage = "No necessary data specified";
         }
