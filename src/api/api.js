@@ -167,7 +167,7 @@ module.exports.getPocketArticles = (event, context, callback) => {
     });
 };
 
-//TODO: save the text and then check its exestance + map to user - pass userId
+//TODO: save the text and then check its existance + map to user - pass userId
 module.exports.getArticlesContent = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
