@@ -85,6 +85,13 @@ functions:
           path: pocket
           method: get
           cors: true
+  getArticlesContent:
+      handler: src/api/api.getArticlesContent
+      events:
+        - http:
+            path: content
+            method: get
+            cors: true
 
 
 #    The following are a few example events you can configure

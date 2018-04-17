@@ -1,7 +1,8 @@
 const Sequelize = require('sequelize');
-const dbCredentials = require("../../data/config");
+const { postgres } = require("../../data/config");
+
 //TODO: initialize it once and then inject?
-const sequelize = new Sequelize(dbCredentials.postgres);
+const sequelize = new Sequelize(postgres);
 
 const User = sequelize.define("user", {
     email: Sequelize.STRING,
