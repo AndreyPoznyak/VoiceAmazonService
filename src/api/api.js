@@ -3,7 +3,7 @@ const pocketProvider = require("../providers/pocket");
 const validator = require("../utils/validation");
 const Codes = require("../constants/httpCodes");
 const helper = require("../utils/helper");
-const articleService = require("../services/articleService");
+const articleService = require("../services/article");
 
 const performRequestCallback = (callback, statusCode, body) => callback(null, { statusCode, body: JSON.stringify(body, null, 4) });
 
@@ -27,6 +27,7 @@ const syncDatabaseSchema = callback => {
 //User API
 module.exports.getAllUsers = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
+
     console.log("Getting all users request");
 
     syncDatabaseSchema(callback).then(() => {
@@ -167,35 +168,75 @@ module.exports.getPocketArticles = (event, context, callback) => {
     });
 };
 
-//TODO: save the text and then check its existance + map to user - pass userId
 module.exports.getArticlesContent = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
     const info = event.queryStringParameters;
+    const validationResult = validator.isArticleParamsSufficient(info);
 
-    //syncDatabaseSchema(callback).then(() => {
-        pocketProvider.getContent(info.url).then(result => {
-            performRequestCallback(callback, Codes.SUCCESS, result);
+    if (!validationResult.success) {
+        performRequestCallback(callback, Codes.BAD_REQUEST, `Error: ${validationResult.message}`);
+        return;
+    }
+
+    const linkArticleToUser = article => {
+        articleService.handleArticleCreation(info.userId, article).then(result => {
+            performRequestCallback(callback, Codes.SUCCESS, {
+                content: article.text,
+                notes: result
+            });
         }, error => {
             console.log(error);
 
-            performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't get parsed article's text from Pocket");
+            performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: ${error.message}`);
         });
-    //});
+    };
+
+    syncDatabaseSchema(callback).then(() => {
+        database.getArticle(info.url).then(article => {
+            if (article) {
+                if (articleService.isTextSaved(article)) {
+                    linkArticleToUser(article);
+                } else {
+                    pocketProvider.getContent(info.url).then(result => {
+                        //link to user
+                        database.addTextToArticle(result, article).then(() => {
+                            linkArticleToUser(article);
+                        }, error => {
+                            console.log(error);
+
+                            performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Not able to save article's text");
+                        });
+                    }, error => {
+                        console.log(error);
+
+                        performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't get parsed article's text from Pocket");
+                    });
+                }
+            } else {
+                performRequestCallback(callback, Codes.BAD_REQUEST, `Error: Not able to find such article`);
+            }
+        }, error => {
+            console.log(error);
+
+            performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: Not able to get the article from DB`);
+        });
+    });
 };
 
-//TODO: moybe remove it at all since getting content will be called anyway
+//NOTE: not relevant atm
 module.exports.addArticles = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
-    var body = JSON.parse(event.body);
+    const body = JSON.parse(event.body);
 
     syncDatabaseSchema(callback)
         .then(() => {
-            var articlePromises = [];
+            const articlePromises = [];
 
             if (body && body.articles && body.userId) {
-                var articles = helper.removeDuplicatesByUniqueKey(body.articles, 'url');
+                const articles = helper.removeDuplicatesByUniqueKey(body.articles, 'url');
+
                 articles.forEach(article => {
                     const validationResult = validator.isArticleParamsSufficient(article);
 

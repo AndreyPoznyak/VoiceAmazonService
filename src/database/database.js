@@ -64,18 +64,6 @@ module.exports = {
     },
 
     //Articles
-    getArticleUserRelation: (articleUrl, userId) => {
-        return Article.findOne({
-            include: [{
-                model: User,
-                through: {
-                    where: { userId: userId }
-                }
-            }],
-            where: { url: articleUrl }
-        });
-    },
-
     saveArticle: (userInfo, article) => {
         return Article.create({
             url: article.url,
@@ -115,6 +103,15 @@ module.exports = {
         });
     },
 
+    //TODO: make this method generic and handle possible errors
+    addTextToArticle: (text, article) => {
+        console.log(`Adding text to article ${article.id}`);
+
+        article.text = text;
+
+        return article.save();
+    },
+
     //TODO: rename this method
     getAllUserArticles: (userWhere, articleWhere) => {
         return User.findOne({
@@ -127,6 +124,18 @@ module.exports = {
                 }
             ],
             where: userWhere
+        });
+    },
+
+    getArticleWithUsers: (articleUrl, userId) => {
+        return Article.findOne({
+            include: [{
+                model: User,
+                through: {
+                    where: { userId }
+                }
+            }],
+            where: { url: articleUrl }
         });
     },
 

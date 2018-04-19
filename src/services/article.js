@@ -2,16 +2,16 @@ const database = require("../database/database");
 
 module.exports = {
     handleArticleCreation: (userId, article) => {
-        return database.getArticleUserRelation(article.url, userId)
-            .then(articleUserRelation => {
+        return database.getArticleWithUsers(article.url, userId)
+            .then(articleWithUsers => {
                 let result = null;
                 let userInfo = {
                     userId: userId,
                     externalSystemId: article.externalSystemId
                 };
 
-                if (articleUserRelation) {
-                    if (articleUserRelation.users.length !== 0) {
+                if (articleWithUsers) {
+                    if (articleWithUsers.users.length !== 0) {
                         result = {
                             message: "Article has already been added and linked to user"
                         };
@@ -19,7 +19,7 @@ module.exports = {
                         //link existing article to user
 
                         result = database
-                            .linkArticleToUser(userInfo, articleUserRelation)
+                            .linkArticleToUser(userInfo, articleWithUsers)
                             .then(() => {
                                 return { message: "Existing article successfully linked to user" };
                             })
@@ -49,14 +49,6 @@ module.exports = {
             });
     },
 
-    isTextSaved: url => {
-        return database.getArticle(url).then(article => {
-            return !!article.text
-        }).catch(error => {
-            console.log(error);
-
-            return { message: "Not able to get the article from DB" }
-        });
-    }
+    isTextSaved: article => !!article.text
 };
 
