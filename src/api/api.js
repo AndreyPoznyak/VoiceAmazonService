@@ -192,29 +192,34 @@ module.exports.getArticlesContent = (event, context, callback) => {
         });
     };
 
+    const fetchContent = () => {
+        pocketProvider.getContent(info.url).then(result => {
+            //link to user
+            database.addTextToArticle(result, article).then(() => {
+                linkArticleToUser(article);
+            }, error => {
+                console.log(error);
+
+                performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Not able to save article's text");
+            });
+        }, error => {
+            console.log(error);
+
+            performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't get parsed article's text from Pocket");
+        });
+    };
+
     syncDatabaseSchema(callback).then(() => {
         database.getArticle(info.url).then(article => {
             if (article) {
                 if (articleService.isTextSaved(article)) {
                     linkArticleToUser(article);
                 } else {
-                    pocketProvider.getContent(info.url).then(result => {
-                        //link to user
-                        database.addTextToArticle(result, article).then(() => {
-                            linkArticleToUser(article);
-                        }, error => {
-                            console.log(error);
-
-                            performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Not able to save article's text");
-                        });
-                    }, error => {
-                        console.log(error);
-
-                        performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't get parsed article's text from Pocket");
-                    });
+                    fetchContent();
                 }
             } else {
-                performRequestCallback(callback, Codes.BAD_REQUEST, `Error: Not able to find such article`);
+                fetchContent();
+                //performRequestCallback(callback, Codes.BAD_REQUEST, `Error: Not able to find such article`);
             }
         }, error => {
             console.log(error);
