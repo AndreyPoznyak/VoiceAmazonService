@@ -64,13 +64,13 @@ functions:
           method: post
           cors: true
   #Articles API
-  addArticle:
-    handler: src/api/api.addArticles
-    events:
-      - http:
-          path: articles
-          method: post
-          cors: true
+#  addArticles:
+#    handler: src/api/api.addArticles
+#    events:
+#      - http:
+#          path: articles
+#          method: post
+#          cors: true
   getArticles:
     handler: src/api/api.getAllArticles
     events:
