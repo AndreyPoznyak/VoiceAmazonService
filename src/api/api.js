@@ -117,17 +117,18 @@ module.exports.getAllArticles = (event, context, callback) => {
 
     const info = event.queryStringParameters;
 
-    console.log("Getting all articles request");
+    console.log("Getting articles request");
 
     syncDatabaseSchema(callback).then(() => {
-
+        //TODO: copy-paste can be removed here
         if (info && info.userId) {
-            database.getAllUserArticles({ id: info.userId }, {}).then(usersArticles => {
-                performRequestCallback(callback, Codes.SUCCESS, usersArticles.articles);
+            database.getUsersArticles(info.userId).then(articles => {
+                performRequestCallback(callback, Codes.SUCCESS, articles);
             }, error => {
                 console.log(error);
 
-                performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't get articles from DB");
+                //TODO: handle separately cases with no users and no articles
+                performRequestCallback(callback, Codes.NOT_FOUND, "Error: Can't get user's articles from DB");
             });
         } else {
             database.getAllArticles().then(articles => {
@@ -135,7 +136,7 @@ module.exports.getAllArticles = (event, context, callback) => {
             }, error => {
                 console.log(error);
 
-                performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't get articles from DB");
+                performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't get all articles from DB");
             });
         }
     });
@@ -179,24 +180,24 @@ module.exports.getArticlesContent = (event, context, callback) => {
         return;
     }
 
-    const linkArticleToUser = article => {
-        articleService.handleArticleCreation(info.userId, article).then(result => {
-            performRequestCallback(callback, Codes.SUCCESS, {
-                content: article.text,
-                notes: result
-            });
-        }, error => {
+    //NOTE: it creates new article as well
+    const handleArticleWithLinkToUser = article => {
+        return articleService.handleArticleCreation(info.userId, article).catch(error => {
             console.log(error);
 
             performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: ${error.message}`);
+            
+            return Promise.reject();
         });
     };
 
-    const fetchContent = () => {
-        pocketProvider.getContent(info.url).then(result => {
-            //link to user
+    const handleContent = (article, linkingStatus) => {
+        pocketProvider.getContent(article.url).then(result => {
             database.addTextToArticle(result, article).then(() => {
-                linkArticleToUser(article);
+                performRequestCallback(callback, Codes.SUCCESS, {
+                    content: article.text,
+                    notes: linkingStatus
+                });
             }, error => {
                 console.log(error);
 
@@ -213,13 +214,30 @@ module.exports.getArticlesContent = (event, context, callback) => {
         database.getArticle(info.url).then(article => {
             if (article) {
                 if (articleService.isTextSaved(article)) {
-                    linkArticleToUser(article);
+                    handleArticleWithLinkToUser(article).then(linkingResult => {
+                        performRequestCallback(callback, Codes.SUCCESS, {
+                            content: article.text,
+                            notes: linkingResult
+                        });
+                    });
                 } else {
-                    fetchContent();
+                    handleArticleWithLinkToUser(article).then(linkingResult => {
+                        handleContent(article, linkingResult);
+                    });
                 }
             } else {
-                fetchContent();
-                //performRequestCallback(callback, Codes.BAD_REQUEST, `Error: Not able to find such article`);
+                handleArticleWithLinkToUser({
+                    url: info.url
+                }).then(linkingResult => {
+                    //TODO: maybe call the outer method again (DRY)
+                    database.getArticle(info.url).then(article => {
+                        handleContent(article, linkingResult);
+                    }, error => {
+                        console.log(error);
+
+                        performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: Not able to get just saved article from DB`);
+                    });
+                });
             }
         }, error => {
             console.log(error);
