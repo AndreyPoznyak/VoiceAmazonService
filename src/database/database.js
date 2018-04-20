@@ -4,6 +4,7 @@ module.exports = {
 
     syncDbSchema: () => sequelize.sync(),
     //syncDbSchema: () => sequelize.sync({ force: true }),
+    //syncDbSchema: () => Article.sync({ force: true }),
 
     saveUser: (info) => {
         //loginDate is now by default
@@ -67,9 +68,9 @@ module.exports = {
     saveArticle: (userInfo, article) => {
         return Article.create({
             url: article.url,
-            title: article.title,
+            title: article.title || null,
             language: article.language || null,
-            text: article.text,
+            text: article.text || null,
             pathToSpeech: article.pathToSpeech || null,
             timeAdded: article.timeAdded || null
         }).then(addedArticle => {
@@ -107,26 +108,21 @@ module.exports = {
     addTextToArticle: (text, article) => {
         console.log(`Adding text to article ${article.id}`);
 
-        article.text = text;
+        article.text = JSON.stringify(text, null, 4);
 
         return article.save();
     },
 
-    //TODO: rename this method
-    getAllUserArticles: (userWhere, articleWhere) => {
+    getUsersArticles: (userId) => {
         return User.findOne({
-            include: [
-                {
-                    model: Article,
-                    through: {
-                        where: articleWhere
-                    }
-                }
-            ],
-            where: userWhere
+            include: [{ model: Article }],
+            where: { id: userId }
+        }).then(user => {
+            return user ? user.articles : Promise.reject("There is no such user")
         });
     },
 
+    //TODO: rethink it since it deals with 1 user only and 1 article only - maybe use method above
     getArticleWithUsers: (articleUrl, userId) => {
         return Article.findOne({
             include: [{
