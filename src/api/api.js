@@ -84,7 +84,7 @@ module.exports.addUser = (event, context, callback) => {
     syncDatabaseSchema(callback).then(() => {
         database.getUser(info.email).then(user => {
             if (user) {
-                database.makeUsersInfoUpToUpdate(user, info).then(() => {
+                database.updateUserData(user, info).then(() => {
                     performRequestCallback(callback, Codes.BAD_REQUEST, {
                         message: "User has already been registered",
                         user: user
@@ -186,18 +186,33 @@ module.exports.getArticlesContent = (event, context, callback) => {
             console.log(error);
 
             performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: ${error.message}`);
-            
+
             return Promise.reject();
+        });
+    };
+
+    const sendData = article => {
+        //TODO: maybe ust send the whole article
+        performRequestCallback(callback, Codes.SUCCESS, {
+            article: JSON.parse(article.text),
+            lang: article.language,
+            images: JSON.parse(article.images),
+            url: article.url
         });
     };
 
     const handleContent = (article, linkingStatus) => {
         pocketProvider.getContent(article.url).then(result => {
-            database.addTextToArticle(result, article).then(() => {
-                performRequestCallback(callback, Codes.SUCCESS, {
-                    content: article.text,
-                    notes: linkingStatus
-                });
+            database.updateArticleData({
+                url: result["resolvedUrl"],
+                text: result["article"],
+                images: result["images"],
+                language: result["lang"],
+                title: result["title"]
+            }, article).then(() => {
+                console.log(linkingStatus);
+
+                sendData(article);
             }, error => {
                 console.log(error);
 
@@ -215,10 +230,9 @@ module.exports.getArticlesContent = (event, context, callback) => {
             if (article) {
                 if (articleService.isTextSaved(article)) {
                     handleArticleWithLinkToUser(article).then(linkingResult => {
-                        performRequestCallback(callback, Codes.SUCCESS, {
-                            content: article.text,
-                            notes: linkingResult
-                        });
+                        console.log(linkingResult);
+
+                        sendData(article);
                     });
                 } else {
                     handleArticleWithLinkToUser(article).then(linkingResult => {
@@ -265,7 +279,8 @@ module.exports.addArticles = (event, context, callback) => {
 
                     if (validationResult.success) {
                         console.log("Adding article with these params: ", article);
-                        articlePromises.push(articleService.handleArticleCreation(body.userId, article))
+                        articlePromises.push(articleService.handleArticleCreation(body.userId, article));
+                        //.catch(error => error) can be added here in order for everything to be resolved
                     } else {
                         console.log("Validation error has been occured for article: ", article);
                         articlePromises.push(Promise.resolve({ message: `Error: ${validationResult.message}` }))

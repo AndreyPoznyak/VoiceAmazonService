@@ -34,7 +34,7 @@ module.exports = {
         });
     },
 
-    makeUsersInfoUpToUpdate: (user, info) => {
+    updateUserData: (user, info) => {
         const now = Date.now();
 
         console.log(`Updating user ${user.id} login date from ${user.loginDate} to ${now}`);
@@ -71,6 +71,8 @@ module.exports = {
             title: article.title || null,
             language: article.language || null,
             text: article.text || null,
+            images: article.images || null,
+            service: article.service || null,
             pathToSpeech: article.pathToSpeech || null,
             timeAdded: article.timeAdded || null
         }).then(addedArticle => {
@@ -104,11 +106,15 @@ module.exports = {
         });
     },
 
-    //TODO: make this method generic and handle possible errors
-    addTextToArticle: (text, article) => {
-        console.log(`Adding text to article ${article.id}`);
+    updateArticleData: (parameters, article) => {
+        console.log(`Updating parameters of article ${article.id}`);
 
-        article.text = JSON.stringify(text, null, 4);
+        article.text = parameters.text ? JSON.stringify(parameters.text) : article.text;
+        article.images = parameters.images ? JSON.stringify(parameters.images) : article.images;
+        article.language = parameters.language || article.language;
+        article.service = parameters.service || article.service;
+        article.url = parameters.url || article.url;
+        article.title = parameters.title || article.title;
 
         return article.save();
     },
