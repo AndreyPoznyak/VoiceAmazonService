@@ -159,30 +159,37 @@ module.exports.getPocketArticles = (event, context, callback) => {
     }
 
     syncDatabaseSchema(callback).then(() => {
-        pocketProvider.getArticles(info.consumerKey, info.accessToken).then(articles => {
+        pocketProvider.getArticles(info.consumerKey, info.accessToken).then(pocketResponse => {
 
-            var articlePromises = [];
+            if (pocketResponse && pocketResponse.list) {
+                const pocketArticlesEntries = Object.entries(pocketResponse.list);
+                //[["1231342", {articleData}]]
+                const pocketArticlesArray = pocketArticlesEntries.map(item => item[1]);
+                const articles = pocketArticlesArray.map(a => articleService.mapPocketArticle(a))
 
-            var articles = helper.removeDuplicatesByUniqueKey(body.articles, 'url');
-            articles.forEach(article => {
-                const validationResult = validator.isArticleParamsSufficient(article);
+                var articlePromises = [];
 
-                if (validationResult.success) {
-                    console.log("Adding article with these params: ", article);
-                    articlePromises.push(articleService.handleArticleCreation(info.userId, article))
-                } else {
-                    console.log("Validation error has been occured for article: ", article);
-                    articlePromises.push(Promise.resolve({ message: `Error: ${validationResult.message}` }))
-                }
-            });
+                var uniqueArticles = helper.removeDuplicatesByUniqueKey(articles, 'url');
+                uniqueArticles.forEach(article => {
+                    const validationResult = validator.isArticleParamsSufficient(article);
 
-            Promise.all(articlePromises)
-            .then(responses => {
-                performRequestCallback(callback, Codes.SUCCESS, articles);
-            })
-            .catch(error => {
-                performRequestCallback(callback, Codes.INTERNAL_ERROR, error);
-            });
+                    if (validationResult.success) {
+                        console.log("Adding article with these params: ", article);
+                        articlePromises.push(articleService.handleArticleCreation(info.userId, article))
+                    } else {
+                        console.log("Validation error has been occured for article: ", article);
+                        articlePromises.push(Promise.resolve({ message: `Error: ${validationResult.message}` }))
+                    }
+                });
+
+                Promise.all(articlePromises)
+                    .then(responses => {
+                        performRequestCallback(callback, Codes.SUCCESS, pocketResponse);
+                    })
+                    .catch(error => {
+                        performRequestCallback(callback, Codes.INTERNAL_ERROR, error);
+                    });
+            }
 
         }, error => {
             console.log(error);
