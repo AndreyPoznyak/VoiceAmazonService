@@ -3,7 +3,7 @@ const pocketProvider = require("../providers/pocket");
 const validator = require("../utils/validation");
 const Codes = require("../constants/httpCodes");
 const helper = require("../utils/helper");
-const articleService = require("../services/articleService");
+const articleService = require("../services/article");
 
 const performRequestCallback = (callback, statusCode, body) => callback(null, { statusCode, body: JSON.stringify(body, null, 4) });
 
@@ -27,6 +27,7 @@ const syncDatabaseSchema = callback => {
 //User API
 module.exports.getAllUsers = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
+
     console.log("Getting all users request");
 
     syncDatabaseSchema(callback).then(() => {
@@ -83,7 +84,7 @@ module.exports.addUser = (event, context, callback) => {
     syncDatabaseSchema(callback).then(() => {
         database.getUser(info.email).then(user => {
             if (user) {
-                database.makeUsersInfoUpToUpdate(user, info).then(() => {
+                database.updateUserData(user, info).then(() => {
                     performRequestCallback(callback, Codes.BAD_REQUEST, {
                         message: "User has already been registered",
                         user: user
@@ -116,17 +117,18 @@ module.exports.getAllArticles = (event, context, callback) => {
 
     const info = event.queryStringParameters;
 
-    console.log("Getting all articles request");
+    console.log("Getting articles request");
 
     syncDatabaseSchema(callback).then(() => {
-
+        //TODO: copy-paste can be removed here
         if (info && info.userId) {
-            database.getAllUserArticles({ id: info.userId }, {}).then(usersArticles => {
-                performRequestCallback(callback, Codes.SUCCESS, usersArticles.articles);
+            database.getUsersArticles(info.userId).then(articles => {
+                performRequestCallback(callback, Codes.SUCCESS, articles);
             }, error => {
                 console.log(error);
 
-                performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't get articles from DB");
+                //TODO: handle separately cases with no users and no articles
+                performRequestCallback(callback, Codes.NOT_FOUND, "Error: Can't get user's articles from DB");
             });
         } else {
             database.getAllArticles().then(articles => {
@@ -134,7 +136,7 @@ module.exports.getAllArticles = (event, context, callback) => {
             }, error => {
                 console.log(error);
 
-                performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't get articles from DB");
+                performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't get all articles from DB");
             });
         }
     });
@@ -190,23 +192,118 @@ module.exports.getPocketArticles = (event, context, callback) => {
     });
 };
 
+module.exports.getArticlesContent = (event, context, callback) => {
+    context.callbackWaitsForEmptyEventLoop = false;
+
+    const info = event.queryStringParameters;
+    const validationResult = validator.isArticleParamsSufficient(info);
+
+    if (!validationResult.success) {
+        performRequestCallback(callback, Codes.BAD_REQUEST, `Error: ${validationResult.message}`);
+        return;
+    }
+
+    //NOTE: it creates new article as well
+    const handleArticleWithLinkToUser = article => {
+        return articleService.handleArticleCreation(info.userId, article).catch(error => {
+            console.log(error);
+
+            performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: ${error.message}`);
+
+            return Promise.reject();
+        });
+    };
+
+    const sendData = article => {
+        //TODO: maybe ust send the whole article
+        performRequestCallback(callback, Codes.SUCCESS, {
+            article: JSON.parse(article.text),
+            lang: article.language,
+            images: JSON.parse(article.images),
+            url: article.url
+        });
+    };
+
+    const handleContent = (article, linkingStatus) => {
+        pocketProvider.getContent(article.url).then(result => {
+            database.updateArticleData({
+                url: result["resolvedUrl"],
+                text: result["article"],
+                images: result["images"],
+                language: result["lang"],
+                title: result["title"]
+            }, article).then(() => {
+                console.log(linkingStatus);
+
+                sendData(article);
+            }, error => {
+                console.log(error);
+
+                performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Not able to save article's text");
+            });
+        }, error => {
+            console.log(error);
+
+            performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't get parsed article's text from Pocket");
+        });
+    };
+
+    syncDatabaseSchema(callback).then(() => {
+        database.getArticle(info.url).then(article => {
+            if (article) {
+                if (articleService.isTextSaved(article)) {
+                    handleArticleWithLinkToUser(article).then(linkingResult => {
+                        console.log(linkingResult);
+
+                        sendData(article);
+                    });
+                } else {
+                    handleArticleWithLinkToUser(article).then(linkingResult => {
+                        handleContent(article, linkingResult);
+                    });
+                }
+            } else {
+                handleArticleWithLinkToUser({
+                    url: info.url
+                }).then(linkingResult => {
+                    //TODO: maybe call the outer method again (DRY)
+                    database.getArticle(info.url).then(article => {
+                        handleContent(article, linkingResult);
+                    }, error => {
+                        console.log(error);
+
+                        performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: Not able to get just saved article from DB`);
+                    });
+                });
+            }
+        }, error => {
+            console.log(error);
+
+            performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: Not able to get the article from DB`);
+        });
+    });
+};
+
+//NOTE: not relevant atm
 module.exports.addArticles = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
-    var body = JSON.parse(event.body);
+    const body = JSON.parse(event.body);
 
     syncDatabaseSchema(callback)
         .then(() => {
-            var articlePromises = [];
+            const articlePromises = [];
 
             if (body && body.articles && body.userId) {
-                var articles = helper.removeDuplicatesByUniqueKey(body.articles, 'url');
+                const articles = helper.removeDuplicatesByUniqueKey(body.articles, 'url');
+
                 articles.forEach(article => {
                     const validationResult = validator.isArticleParamsSufficient(article);
 
                     if (validationResult.success) {
                         console.log("Adding article with these params: ", article);
-                        articlePromises.push(articleService.handleArticleCreation(body.userId, article))
+                        articlePromises.push(articleService.handleArticleCreation(body.userId, article));
+                        //.catch(error => error) can be added here in order for everything to be resolved
                     } else {
                         console.log("Validation error has been occured for article: ", article);
                         articlePromises.push(Promise.resolve({ message: `Error: ${validationResult.message}` }))

@@ -4,6 +4,7 @@ module.exports = {
 
     syncDbSchema: () => sequelize.sync(),
     //syncDbSchema: () => sequelize.sync({ force: true }),
+    //syncDbSchema: () => Article.sync({ force: true }),
 
     saveUser: (info) => {
         //loginDate is now by default
@@ -33,7 +34,7 @@ module.exports = {
         });
     },
 
-    makeUsersInfoUpToUpdate: (user, info) => {
+    updateUserData: (user, info) => {
         const now = Date.now();
 
         console.log(`Updating user ${user.id} login date from ${user.loginDate} to ${now}`);
@@ -64,26 +65,14 @@ module.exports = {
     },
 
     //Articles
-    getArticleUserRelation: (articleUrl, userId) => {
-        return Article.findOne({
-            include: [
-                {
-                    model: User,
-                    through: {
-                        where: { userId: userId }
-                    }
-                }
-            ],
-            where: { url: articleUrl }
-        });
-    },
-
     saveArticle: (userInfo, article) => {
         return Article.create({
             url: article.url,
-            title: article.title,
+            title: article.title || null,
             language: article.language || null,
-            text: article.text,
+            text: article.text || null,
+            images: article.images || null,
+            service: article.service || null,
             pathToSpeech: article.pathToSpeech || null,
             timeAdded: article.timeAdded || null
         }).then(addedArticle => {
@@ -92,12 +81,11 @@ module.exports = {
                     id: userInfo.userId
                 }
             }).then(user => {
-                addedArticle.addUser(
-                    user, {
-                        through: {
-                            externalSystemId: userInfo.externalSystemId || null
-                        }
-                    });
+                addedArticle.addUser(user, {
+                    through: {
+                        externalSystemId: userInfo.externalSystemId || null
+                    }
+                });
             });
         });
     },
@@ -110,17 +98,46 @@ module.exports = {
         });
     },
 
-    getAllUserArticles: (userWhere, articleWhere) => {
+    getArticle: url => {
+        return Article.findOne({
+            where: {
+                url
+            }
+        });
+    },
+
+    updateArticleData: (parameters, article) => {
+        console.log(`Updating parameters of article ${article.id}`);
+
+        article.text = parameters.text ? JSON.stringify(parameters.text) : article.text;
+        article.images = parameters.images ? JSON.stringify(parameters.images) : article.images;
+        article.language = parameters.language || article.language;
+        article.service = parameters.service || article.service;
+        article.url = parameters.url || article.url;
+        article.title = parameters.title || article.title;
+
+        return article.save();
+    },
+
+    getUsersArticles: (userId) => {
         return User.findOne({
-            include: [
-                {
-                    model: Article,
-                    through: {
-                        where: articleWhere
-                    }
+            include: [{ model: Article }],
+            where: { id: userId }
+        }).then(user => {
+            return user ? user.articles : Promise.reject("There is no such user")
+        });
+    },
+
+    //TODO: rethink it since it deals with 1 user only and 1 article only - maybe use method above
+    getArticleWithUsers: (articleUrl, userId) => {
+        return Article.findOne({
+            include: [{
+                model: User,
+                through: {
+                    where: { userId }
                 }
-            ],
-            where: userWhere
+            }],
+            where: { url: articleUrl }
         });
     },
 

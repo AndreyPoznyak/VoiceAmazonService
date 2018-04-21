@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize');
-const dbCredentials = require("../../data/config");
-//TODO: initialize it once and then inject?
-const sequelize = new Sequelize(dbCredentials.postgres);
+const { postgres } = require("../../data/config");
+
+const sequelize = new Sequelize(postgres);
 
 const User = sequelize.define("user", {
     email: Sequelize.STRING,
@@ -18,10 +18,12 @@ const User = sequelize.define("user", {
 });
 
 const Article = sequelize.define("article", {
+    service: Sequelize.STRING, //without relation for now, "voice" or "pocket" :)
     url: Sequelize.STRING,
     title: Sequelize.STRING,
     language: Sequelize.STRING,
-    text: Sequelize.STRING,
+    images: Sequelize.TEXT, //json with images data
+    text: Sequelize.TEXT,
     pathToSpeech: Sequelize.STRING,
     timeAdded: Sequelize.DATE //TODO: why do we need it?
 });
