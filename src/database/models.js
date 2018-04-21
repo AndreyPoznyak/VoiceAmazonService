@@ -18,9 +18,11 @@ const User = sequelize.define("user", {
 });
 
 const Article = sequelize.define("article", {
+    service: Sequelize.STRING, //without relation for now, "voice" or "pocket" :)
     url: Sequelize.STRING,
     title: Sequelize.STRING,
     language: Sequelize.STRING,
+    images: Sequelize.TEXT, //json with images data
     text: Sequelize.TEXT,
     pathToSpeech: Sequelize.STRING,
     timeAdded: Sequelize.DATE //TODO: why do we need it?
