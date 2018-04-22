@@ -1,6 +1,8 @@
 const database = require("../database/database");
+const serviceTypes = require("../constants/serviceTypes")
 
 module.exports = {
+    //review perfomance
     handleArticleCreation: (userId, article) => {
         return new Promise((resolve, reject) => {
             database.getArticleWithUsers(article.url, userId)
@@ -50,6 +52,16 @@ module.exports = {
         });
     },
 
-    isTextSaved: article => !!article.text
-};
+    isTextSaved: article => !!article.text,
 
+    mapPocketArticle: (pocketArticle) => {
+        return {
+            url: pocketArticle.resolved_url,
+            title: pocketArticle.resolved_title || null,
+            service: serviceTypes.POCKET,
+            timeAdded: Date.now(), //maybe it should be a column in UserArticles table. There is time_added field in pocket's response
+            externalSystemId: pocketArticle.resolved_id,
+            active: pocketArticle.status == "0"
+        }
+    }
+};

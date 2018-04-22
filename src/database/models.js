@@ -15,21 +15,36 @@ const User = sequelize.define("user", {
         type: Sequelize.DATE,
         defaultValue: Sequelize.NOW
     }
-});
+}, {
+        indexes: [
+            {
+                unique: true,
+                fields: ['email']
+            }
+        ]
+    });
 
 const Article = sequelize.define("article", {
     service: Sequelize.STRING, //without relation for now, "voice" or "pocket" :)
-    url: Sequelize.STRING,
-    title: Sequelize.STRING,
+    url: Sequelize.STRING(2000),
+    title: Sequelize.STRING(500),//todo: trim title before adding?
     language: Sequelize.STRING,
     images: Sequelize.TEXT, //json with images data
     text: Sequelize.TEXT,
     pathToSpeech: Sequelize.STRING,
     timeAdded: Sequelize.DATE //TODO: why do we need it?
-});
+}, {
+        indexes: [
+            {
+                unique: true,
+                fields: ['url']
+            }
+        ]
+    });
 
 const UserArticles = sequelize.define("userArticles", {
-    externalSystemId: Sequelize.STRING  //string maybe
+    externalSystemId: Sequelize.STRING
+    //active: Sequelize.BOOLEAN
 });
 
 User.belongsToMany(Article, { through: UserArticles });

@@ -76,16 +76,10 @@ module.exports = {
             pathToSpeech: article.pathToSpeech || null,
             timeAdded: article.timeAdded || null
         }).then(addedArticle => {
-            User.findOne({
-                where: {
-                    id: userInfo.userId
+            return addedArticle.addUser(userInfo.userId, {
+                through: {
+                    externalSystemId: userInfo.externalSystemId || null
                 }
-            }).then(user => {
-                addedArticle.addUser(user, {
-                    through: {
-                        externalSystemId: userInfo.externalSystemId || null
-                    }
-                });
             });
         });
     },
@@ -142,16 +136,10 @@ module.exports = {
     },
 
     linkArticleToUser: (info, article) => {
-        return User.findOne({
-            where: {
-                id: info.userId
+        return article.addUser(info.userId, {
+            through: {
+                externalSystemId: info.externalSystemId || null
             }
-        }).then(user => {
-            return user.addArticle(article, {
-                through: {
-                    externalSystemId: info.externalSystemId || null
-                }
-            });
         });
     }
 };

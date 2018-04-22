@@ -23,13 +23,9 @@ module.exports = {
         let success = true;
         let errorMessage = "";
 
-        //userId is needed to link article with exact user
         if (!info || !info.url) {
             success = false;
             errorMessage = "No necessary data specified";
-        } else if (!info.userId) {
-            success = false;
-            errorMessage = "User ID is not specified";
         } else if (!validator.isURL(info.url)) {
             success = false;
             errorMessage = "The URL is invalid";
@@ -45,7 +41,7 @@ module.exports = {
         let success = true;
         let errorMessage = "";
 
-        if (!info || !info.consumerKey || !info.accessToken) {
+        if (!info || !info.consumerKey || !info.accessToken || !info.userId) {
             success = false;
             errorMessage = "No necessary data specified";
         }
