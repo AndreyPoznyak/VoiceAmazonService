@@ -136,16 +136,10 @@ module.exports = {
     },
 
     linkArticleToUser: (info, article) => {
-        return User.findOne({
-            where: {
-                id: info.userId
+        return article.addUser(info.userId, {
+            through: {
+                externalSystemId: info.externalSystemId || null
             }
-        }).then(user => {
-            return user.addArticle(article, {
-                through: {
-                    externalSystemId: info.externalSystemId || null
-                }
-            });
         });
     }
 };
