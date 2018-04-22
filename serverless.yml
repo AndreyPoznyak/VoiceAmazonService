@@ -92,6 +92,13 @@ functions:
             path: content
             method: get
             cors: true
+  syncDbSchema:
+    handler: src/api/api.syncDbSchema
+    events:
+      - http:
+          path: syncDbSchema
+          method: get
+          cors: true
 
 
 #    The following are a few example events you can configure
