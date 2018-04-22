@@ -76,16 +76,10 @@ module.exports = {
             pathToSpeech: article.pathToSpeech || null,
             timeAdded: article.timeAdded || null
         }).then(addedArticle => {
-            User.findOne({
-                where: {
-                    id: userInfo.userId
+            return addedArticle.addUser(userInfo.userId, {
+                through: {
+                    externalSystemId: userInfo.externalSystemId || null
                 }
-            }).then(user => {
-                addedArticle.addUser(user, {
-                    through: {
-                        externalSystemId: userInfo.externalSystemId || null
-                    }
-                });
             });
         });
     },
