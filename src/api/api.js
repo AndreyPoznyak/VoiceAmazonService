@@ -165,9 +165,9 @@ module.exports.getPocketArticles = (event, context, callback) => {
     pocketProvider.getArticles(info.consumerKey, info.accessToken).then(pocketResponse => {
 
         if (pocketResponse && pocketResponse.list) {
-            const pocketArticlesEntries = Object.entries(pocketResponse.list);
-            //[["1231342", {articleData}]]
-            const pocketArticlesArray = pocketArticlesEntries.map(item => item[1]);
+            const pocketArticlesArray = [];
+            Object.keys(pocketResponse.list).forEach(key => { pocketArticlesArray.push(pocketResponse.list[key]) });
+
             const articles = pocketArticlesArray.map(a => articleService.mapPocketArticle(a))
 
             var articlePromises = [];
