@@ -168,7 +168,7 @@ module.exports.getPocketArticles = (event, context, callback) => {
             const pocketArticlesArray = [];
             Object.keys(pocketResponse.list).forEach(key => { pocketArticlesArray.push(pocketResponse.list[key]) });
 
-            const articles = pocketArticlesArray.map(a => articleService.mapPocketArticle(a))
+            const articles = pocketArticlesArray.map(a => articleService.getArticleDto(a))
 
             var articlePromises = [];
 
@@ -187,7 +187,7 @@ module.exports.getPocketArticles = (event, context, callback) => {
 
             Promise.all(articlePromises)
                 .then(responses => {
-                    performRequestCallback(callback, Codes.SUCCESS, pocketResponse);
+                    performRequestCallback(callback, Codes.SUCCESS, uniqueArticles);
                 })
                 .catch(error => {
                     performRequestCallback(callback, Codes.INTERNAL_ERROR, error);

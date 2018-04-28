@@ -54,7 +54,7 @@ module.exports = {
 
     isTextSaved: article => !!article.text,
 
-    mapPocketArticle: (pocketArticle) => {
+    getArticleDto: (pocketArticle) => {
         return {
             url: pocketArticle.resolved_url,
             title: pocketArticle.resolved_title || null,
