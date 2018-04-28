@@ -9,12 +9,12 @@ const performRequestCallback = (callback, statusCode, body) => callback(null, { 
 
 let databaseWasSynced = false; //small optimization for the scope of the same process
 
-const syncDatabaseSchema = callback => {
+const syncDatabaseSchema = (info, callback) => {
     if (databaseWasSynced) {
         return Promise.resolve();
     }
 
-    return database.syncDbSchema().then(() => {
+    return database.syncDbSchema(info).then(() => {
         databaseWasSynced = true;
     }, error => {
         console.log(error);
@@ -25,7 +25,9 @@ const syncDatabaseSchema = callback => {
 module.exports.syncDbSchema = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
-    syncDatabaseSchema(callback)
+    const info = event.queryStringParameters;
+
+    syncDatabaseSchema(info, callback)
         .then(() => {
             performRequestCallback(callback, Codes.SUCCESS, 'Db schema has been successfully synced');
         })

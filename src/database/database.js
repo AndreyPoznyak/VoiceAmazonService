@@ -2,9 +2,14 @@ const { sequelize, User, Article, UserArticles } = require("./models");
 
 module.exports = {
 
-    syncDbSchema: () => sequelize.sync(),
-    //syncDbSchema: () => sequelize.sync({ force: true }),
-    //syncDbSchema: () => Article.sync({ force: true }),
+    syncDbSchema: (info) => {
+        //we can extend this func in future
+        return sequelize.sync({ force: info.force || false })
+
+        //syncDbSchema: () => sequelize.sync({ force: true }),
+        //syncDbSchema: () => Article.sync({ force: true }),
+    },
+
 
     saveUser: (info) => {
         //loginDate is now by default
@@ -78,7 +83,8 @@ module.exports = {
         }).then(addedArticle => {
             return addedArticle.addUser(userInfo.userId, {
                 through: {
-                    externalSystemId: userInfo.externalSystemId || null
+                    externalSystemId: userInfo.externalSystemId || null,
+                    active: userInfo.active || true
                 }
             });
         });
@@ -138,7 +144,8 @@ module.exports = {
     linkArticleToUser: (info, article) => {
         return article.addUser(info.userId, {
             through: {
-                externalSystemId: info.externalSystemId || null
+                externalSystemId: info.externalSystemId || null,
+                active: info.active || true
             }
         });
     }
