@@ -9,7 +9,8 @@ module.exports = {
                 .then(articleWithUsers => {
                     let userInfo = {
                         userId: userId,
-                        externalSystemId: article.externalSystemId
+                        externalSystemId: article.externalSystemId,
+                        active: article.active
                     };
 
                     if (articleWithUsers) {
