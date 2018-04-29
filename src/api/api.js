@@ -9,31 +9,23 @@ const performRequestCallback = (callback, statusCode, body) => callback(null, { 
 
 let databaseWasSynced = false; //small optimization for the scope of the same process
 
-const syncDatabaseSchema = (info, callback) => {
-    if (databaseWasSynced) {
-        return Promise.resolve();
-    }
-
-    return database.syncDbSchema(info).then(() => {
-        databaseWasSynced = true;
-    }, error => {
-        console.log(error);
-        performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't sync database schema.");
-    });
-};
-
 module.exports.syncDbSchema = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
     const info = event.queryStringParameters;
 
-    syncDatabaseSchema(info, callback)
-        .then(() => {
-            performRequestCallback(callback, Codes.SUCCESS, 'Db schema has been successfully synced');
-        })
-        .catch(error => {
-            performRequestCallback(callback, Codes.INTERNAL_ERROR, `Sync db schema has failed due to error: ${error.message}`);
-        });
+    if (databaseWasSynced) {
+        performRequestCallback(callback, Codes.SUCCESS, 'Db schema has been successfully synced');
+        return
+    }
+
+    database.syncDbSchema(info).then(() => {
+        databaseWasSynced = true;
+        performRequestCallback(callback, Codes.SUCCESS, 'Db schema has been successfully synced');
+    }).catch(error => {
+        console.log(error);
+        performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: Can't sync database schema: ${info.email}`);
+    });
 };
 
 //NOTE: event Contains incoming request data (e.g., query params, headers and more)
