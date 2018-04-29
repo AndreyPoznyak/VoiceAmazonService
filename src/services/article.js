@@ -16,6 +16,7 @@ module.exports = {
                     if (articleWithUsers) {
                         if (articleWithUsers.users.length !== 0) {
                             resolve({
+                                article: articleWithUsers,
                                 message: "Article has already been added and linked to user"
                             });
                         } else {
@@ -24,7 +25,9 @@ module.exports = {
                             database
                                 .linkArticleToUser(userInfo, articleWithUsers)
                                 .then(() => {
-                                    resolve({ message: "Existing article successfully linked to user" });
+                                    resolve({
+                                        article: articleWithUsers,
+                                        message: "Existing article successfully linked to user" });
                                 }, error => {
                                     console.log(error);
 
@@ -35,8 +38,10 @@ module.exports = {
                         //add new article and link to user
                         database
                             .saveArticle(userInfo, article)
-                            .then(() => {
-                                resolve({ message: "Successfully added article to DB and linked it to user" });
+                            .then((addedArticle) => {
+                                resolve({
+                                    article: addedArticle,
+                                    message: "Successfully added article to DB and linked it to user" });
                             })
                             .catch(error => {
                                 console.log(error);

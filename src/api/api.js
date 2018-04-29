@@ -189,6 +189,15 @@ module.exports.getPocketArticles = (event, context, callback) => {
 
             Promise.all(articlePromises)
                 .then(responses => {
+                    //add id field(from our db) to articles which come from pocket
+                    const articlesFromDb = responses.map(resp => resp.article);
+                    uniqueArticles.forEach(ua => {
+                        const theSameArticle = articlesFromDb.find(a => a.url === ua.url);
+                        if (theSameArticle != null) {
+                            ua.id = theSameArticle.id
+                        }
+                    });
+
                     performRequestCallback(callback, Codes.SUCCESS, uniqueArticles);
                 })
                 .catch(error => {

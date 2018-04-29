@@ -86,8 +86,10 @@ module.exports = {
                     externalSystemId: userInfo.externalSystemId || null,
                     active: userInfo.active || true
                 }
+            }).then(() => {
+                return addedArticle;
             });
-        });
+        })
     },
 
     getAllArticles: () => {
