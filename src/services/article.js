@@ -65,7 +65,7 @@ module.exports = {
             url: pocketArticle.resolved_url,
             title: pocketArticle.resolved_title || null,
             service: serviceTypes.POCKET,
-            timeAdded: pocketArticle.time_added,
+            timeAdded: pocketArticle.time_added, //maybe it should be a column in UserArticles table. Could be needed for order in articleTable view 
             externalSystemId: pocketArticle.resolved_id,
             active: pocketArticle.status == "0"
         }
