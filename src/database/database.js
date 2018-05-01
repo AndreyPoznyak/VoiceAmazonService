@@ -79,7 +79,7 @@ module.exports = {
             images: article.images || null,
             service: article.service || null,
             pathToSpeech: article.pathToSpeech || null,
-            timeAdded: article.timeAdded || null
+            timeAdded: article.timeAdded ? new Date(article.timeAdded * 1000) : null
         }).then(addedArticle => {
             return addedArticle.addUser(userInfo.userId, {
                 through: {

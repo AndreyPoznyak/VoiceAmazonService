@@ -7,24 +7,16 @@ const articleService = require("../services/article");
 
 const performRequestCallback = (callback, statusCode, body) => callback(null, { statusCode, body: JSON.stringify(body, null, 4) });
 
-let databaseWasSynced = false; //small optimization for the scope of the same process
-
 module.exports.syncDbSchema = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
     const info = event.queryStringParameters;
 
-    if (databaseWasSynced) {
-        performRequestCallback(callback, Codes.SUCCESS, 'Db schema has been successfully synced');
-        return
-    }
-
     database.syncDbSchema(info).then(() => {
-        databaseWasSynced = true;
         performRequestCallback(callback, Codes.SUCCESS, 'Db schema has been successfully synced');
     }).catch(error => {
         console.log(error);
-        performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: Can't sync database schema: ${info.email}`);
+        performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: Can't sync database schema: ${error.message}`);
     });
 };
 
@@ -156,27 +148,20 @@ module.exports.getPocketArticles = (event, context, callback) => {
         return;
     }
 
-    pocketProvider.getArticles(info.consumerKey, info.accessToken).then(pocketResponse => {
+    pocketProvider.getArticles(info.consumerKey, info.accessToken).then(pocketArticlesArray => {
 
-        if (pocketResponse && pocketResponse.list) {
-            const pocketArticlesArray = [];
-            Object.keys(pocketResponse.list).forEach(key => { pocketArticlesArray.push(pocketResponse.list[key]) });
+        if (pocketArticlesArray) {
+            const articleDtos = pocketArticlesArray.map(a => articleService.getArticleDto(a))
 
-            const articles = pocketArticlesArray.map(a => articleService.getArticleDto(a))
+            const articlePromises = [];
 
-            var articlePromises = [];
-
-            var uniqueArticles = helper.removeDuplicatesByUniqueKey(articles, 'url');
+            const uniqueArticles = helper.removeDuplicatesByUniqueKey(articleDtos, 'url');
             uniqueArticles.forEach(article => {
                 const validationResult = validator.isArticleParamsSufficient(article);
 
-                if (validationResult.success) {
-                    console.log("Adding article with these params: ", article);
-                    articlePromises.push(articleService.handleArticleCreation(info.userId, article))
-                } else {
-                    console.log("Validation error has been occured for article: ", article);
-                    articlePromises.push(Promise.resolve({ message: `Error: ${validationResult.message}` }))
-                }
+                console.log("Adding article with these params: ", article);
+                articlePromises.push(articleService.handleArticleCreation(info.userId, article))
+
             });
 
             Promise.all(articlePromises)

@@ -65,7 +65,7 @@ module.exports = {
             url: pocketArticle.resolved_url,
             title: pocketArticle.resolved_title || null,
             service: serviceTypes.POCKET,
-            timeAdded: Date.now(), //maybe it should be a column in UserArticles table. There is time_added field in pocket's response
+            timeAdded: pocketArticle.time_added,
             externalSystemId: pocketArticle.resolved_id,
             active: pocketArticle.status == "0"
         }

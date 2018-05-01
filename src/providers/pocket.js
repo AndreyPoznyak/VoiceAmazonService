@@ -3,7 +3,7 @@ const queryString = require('query-string');
 const { pocket } = require("../../data/config");
 
 const defaultHeaders = {
-    "Content-Type":"application/json",
+    "Content-Type": "application/json",
     "X-Accept": "application/json"
 };
 
@@ -18,7 +18,22 @@ module.exports = {
                 "access_token": accessToken,
                 "state": "all"
             })
-        }).then(response => response.ok ? response.json() : Promise.reject(response));
+        }).then(response => new Promise((resolve, reject) => {
+
+            if (response.ok) {
+                response.json().then(content => {
+                    const pocketArticlesArray = [];
+
+                    if (content && content.list) {
+                        Object.keys(content.list).forEach(key => { pocketArticlesArray.push(content.list[key]) });
+                    }
+
+                    resolve(pocketArticlesArray);
+                });
+            } else {
+                reject(response)
+            }
+        }));
     },
 
     getContent: (articlesUrl) => {
@@ -31,8 +46,7 @@ module.exports = {
             "output": "json"
         };
         //            "state": "unread"
-
-        return fetch(`https://text.getpocket.com/v3/text?${queryString.stringify(params, { sort: false })}`, {
+        fetch(`https://text.getpocket.com/v3/text?${queryString.stringify(params, { sort: false })}`, {
             method: "GET",
             headers: defaultHeaders
         }).then(response => response.ok ? response.json() : Promise.reject(response));
