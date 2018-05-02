@@ -7,31 +7,17 @@ const articleService = require("../services/article");
 
 const performRequestCallback = (callback, statusCode, body) => callback(null, { statusCode, body: JSON.stringify(body, null, 4) });
 
-let databaseWasSynced = false; //small optimization for the scope of the same process
-
-const syncDatabaseSchema = callback => {
-    if (databaseWasSynced) {
-        return Promise.resolve();
-    }
-
-    return database.syncDbSchema().then(() => {
-        databaseWasSynced = true;
-    }, error => {
-        console.log(error);
-        performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't sync database schema.");
-    });
-};
-
 module.exports.syncDbSchema = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
-    syncDatabaseSchema(callback)
-        .then(() => {
-            performRequestCallback(callback, Codes.SUCCESS, 'Db schema has been successfully synced');
-        })
-        .catch(error => {
-            performRequestCallback(callback, Codes.INTERNAL_ERROR, `Sync db schema has failed due to error: ${error.message}`);
-        });
+    const info = event.queryStringParameters;
+
+    database.syncDbSchema(info).then(() => {
+        performRequestCallback(callback, Codes.SUCCESS, 'Db schema has been successfully synced');
+    }).catch(error => {
+        console.log(error);
+        performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: Can't sync database schema: ${error.message}`);
+    });
 };
 
 //NOTE: event Contains incoming request data (e.g., query params, headers and more)
@@ -162,32 +148,34 @@ module.exports.getPocketArticles = (event, context, callback) => {
         return;
     }
 
-    pocketProvider.getArticles(info.consumerKey, info.accessToken).then(pocketResponse => {
+    pocketProvider.getArticles(info.consumerKey, info.accessToken).then(pocketArticlesArray => {
 
-        if (pocketResponse && pocketResponse.list) {
-            const pocketArticlesArray = [];
-            Object.keys(pocketResponse.list).forEach(key => { pocketArticlesArray.push(pocketResponse.list[key]) });
+        if (pocketArticlesArray) {
+            const articleDtos = pocketArticlesArray.map(a => articleService.getArticleDto(a))
 
-            const articles = pocketArticlesArray.map(a => articleService.mapPocketArticle(a))
+            const articlePromises = [];
 
-            var articlePromises = [];
-
-            var uniqueArticles = helper.removeDuplicatesByUniqueKey(articles, 'url');
+            const uniqueArticles = helper.removeDuplicatesByUniqueKey(articleDtos, 'url');
             uniqueArticles.forEach(article => {
                 const validationResult = validator.isArticleParamsSufficient(article);
 
-                if (validationResult.success) {
-                    console.log("Adding article with these params: ", article);
-                    articlePromises.push(articleService.handleArticleCreation(info.userId, article))
-                } else {
-                    console.log("Validation error has been occured for article: ", article);
-                    articlePromises.push(Promise.resolve({ message: `Error: ${validationResult.message}` }))
-                }
+                console.log("Adding article with these params: ", article);
+                articlePromises.push(articleService.handleArticleCreation(info.userId, article))
+
             });
 
             Promise.all(articlePromises)
                 .then(responses => {
-                    performRequestCallback(callback, Codes.SUCCESS, pocketResponse);
+                    //add id field(from our db) to articles which come from pocket
+                    const articlesFromDb = responses.map(resp => resp.article);
+                    uniqueArticles.forEach(ua => {
+                        const theSameArticle = articlesFromDb.find(a => a.url === ua.url);
+                        if (theSameArticle != null) {
+                            ua.id = theSameArticle.id
+                        }
+                    });
+
+                    performRequestCallback(callback, Codes.SUCCESS, uniqueArticles);
                 })
                 .catch(error => {
                     performRequestCallback(callback, Codes.INTERNAL_ERROR, error);

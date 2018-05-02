@@ -43,8 +43,8 @@ const Article = sequelize.define("article", {
     });
 
 const UserArticles = sequelize.define("userArticles", {
-    externalSystemId: Sequelize.STRING
-    //active: Sequelize.BOOLEAN
+    externalSystemId: Sequelize.STRING,
+    active: Sequelize.BOOLEAN
 });
 
 User.belongsToMany(Article, { through: UserArticles });

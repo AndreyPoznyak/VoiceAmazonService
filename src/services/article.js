@@ -9,12 +9,14 @@ module.exports = {
                 .then(articleWithUsers => {
                     let userInfo = {
                         userId: userId,
-                        externalSystemId: article.externalSystemId
+                        externalSystemId: article.externalSystemId,
+                        active: article.active
                     };
 
                     if (articleWithUsers) {
                         if (articleWithUsers.users.length !== 0) {
                             resolve({
+                                article: articleWithUsers,
                                 message: "Article has already been added and linked to user"
                             });
                         } else {
@@ -23,7 +25,9 @@ module.exports = {
                             database
                                 .linkArticleToUser(userInfo, articleWithUsers)
                                 .then(() => {
-                                    resolve({ message: "Existing article successfully linked to user" });
+                                    resolve({
+                                        article: articleWithUsers,
+                                        message: "Existing article successfully linked to user" });
                                 }, error => {
                                     console.log(error);
 
@@ -34,8 +38,10 @@ module.exports = {
                         //add new article and link to user
                         database
                             .saveArticle(userInfo, article)
-                            .then(() => {
-                                resolve({ message: "Successfully added article to DB and linked it to user" });
+                            .then((addedArticle) => {
+                                resolve({
+                                    article: addedArticle,
+                                    message: "Successfully added article to DB and linked it to user" });
                             })
                             .catch(error => {
                                 console.log(error);
@@ -54,12 +60,12 @@ module.exports = {
 
     isTextSaved: article => !!article.text,
 
-    mapPocketArticle: (pocketArticle) => {
+    getArticleDto: (pocketArticle) => {
         return {
             url: pocketArticle.resolved_url,
             title: pocketArticle.resolved_title || null,
             service: serviceTypes.POCKET,
-            timeAdded: Date.now(), //maybe it should be a column in UserArticles table. There is time_added field in pocket's response
+            timeAdded: pocketArticle.time_added, //maybe it should be a column in UserArticles table. Could be needed for order in articleTable view 
             externalSystemId: pocketArticle.resolved_id,
             active: pocketArticle.status == "0"
         }
