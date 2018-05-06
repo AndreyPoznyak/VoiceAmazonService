@@ -1,5 +1,6 @@
 const database = require("../database/database");
 const serviceTypes = require("../constants/serviceTypes")
+const pocketProvider = require("../providers/pocket");
 
 module.exports = {
     //review perfomance
@@ -65,9 +66,29 @@ module.exports = {
             url: pocketArticle.resolved_url,
             title: pocketArticle.resolved_title || null,
             service: serviceTypes.POCKET,
-            timeAdded: pocketArticle.time_added, //maybe it should be a column in UserArticles table. Could be needed for order in articleTable view 
+            timeAdded: pocketArticle.time_added, //maybe it should be a column in UserArticles table. Could be needed for order in articleTable view
             externalSystemId: pocketArticle.resolved_id,
             active: pocketArticle.status == "0"
         }
+    },
+
+    moveToArchive: (articleId, userId) => {
+        database.getArticleById(articleId, userId)
+        .then(article => {
+            console.log(article);
+            if (article){
+                //set active to false
+                switch(article.service){
+                    case serviceTypes.POCKET:
+                    pocketProvider.sendAction()
+                    case serviceTypes.VOICE:
+                    //do nothing
+                    default:
+                    //what the fuck? set Active to false
+                }
+            } else {
+                //throw an error
+            }
+        })
     }
 };

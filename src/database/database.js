@@ -143,6 +143,18 @@ module.exports = {
         });
     },
 
+    getArticleById: (articleId, userId) => {
+        return Article.findOne({
+            include: [{
+                model: User,
+                through: {
+                    where: { userId }
+                }
+            }],
+            where: { id: articleId }
+        });
+    },
+
     linkArticleToUser: (info, article) => {
         return article.addUser(info.userId, {
             through: {

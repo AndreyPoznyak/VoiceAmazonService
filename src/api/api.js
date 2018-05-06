@@ -314,3 +314,13 @@ module.exports.addArticles = (event, context, callback) => {
             performRequestCallback(callback, Codes.INTERNAL_ERROR, error);
         });
 };
+
+module.exports.sendArticleAction = (event, context, callback) => {
+    context.callbackWaitsForEmptyEventLoop = false;
+
+    const body = JSON.parse(event.body);
+
+   articleService.moveToArchive(body.articleId, body.userId).then(response => {
+        performRequestCallback(callback, Codes.CREATED, response);
+   })
+};
