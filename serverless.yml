@@ -99,6 +99,14 @@ functions:
           path: syncDbSchema
           method: get
           cors: true
+  sendArticleAction:
+    handler: src/api/api.sendArticleAction
+    events:
+      - http:
+          path: article/action
+          method: post
+          cors: true
+
 
 
 #    The following are a few example events you can configure

@@ -50,5 +50,25 @@ module.exports = {
             method: "GET",
             headers: defaultHeaders
         }).then(response => response.ok ? response.json() : Promise.reject(response));
+    },
+
+    sendAction: (externalSystemId, action, consumer_key, access_token) => {
+        const actionParams = {
+            "action": action.rawValue,
+            "item_id": externalSystemId,
+            "time": new Date.now
+        }
+
+        const body = JSON.stringify({
+            "consumer_key": consumerKey,
+            "access_token": accessToken,
+            "actions": actionParams
+        })
+
+        fetch("https://getpocket.com/v3/send", {
+            method: "POST",
+            headers: defaultHeaders,
+            body: body
+        }).then(response => response.ok ? response.json() : Promise.reject(response));
     }
 };
