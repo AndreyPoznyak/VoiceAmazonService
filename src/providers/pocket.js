@@ -52,20 +52,20 @@ module.exports = {
         }).then(response => response.ok ? response.json() : Promise.reject(response));
     },
 
-    sendAction: (externalSystemId, action, consumer_key, access_token) => {
+    moveToArchive: (externalSystemId, consumer_key, access_token) => {
         const actionParams = {
-            "action": action.rawValue,
+            "action": "archive",
             "item_id": externalSystemId,
-            "time": new Date.now
+            "time": new Date()
         }
 
         const body = JSON.stringify({
-            "consumer_key": consumerKey,
-            "access_token": accessToken,
-            "actions": actionParams
+            "consumer_key": consumer_key,
+            "access_token": access_token,
+            "actions": [actionParams]
         })
 
-        fetch("https://getpocket.com/v3/send", {
+        return fetch("https://getpocket.com/v3/send", {
             method: "POST",
             headers: defaultHeaders,
             body: body

@@ -148,10 +148,13 @@ module.exports = {
             include: [{
                 model: User,
                 through: {
+                    attributes: ["externalSystemId", "active", "id"],
                     where: { userId }
                 }
             }],
-            where: { id: articleId }
+            where: {
+                id: articleId,
+            }
         });
     },
 
@@ -161,6 +164,21 @@ module.exports = {
                 externalSystemId: info.externalSystemId || null,
                 active: info.active || true
             }
+        });
+    },
+
+    updateUserArticle: (articleId, userId, info) => {
+        return UserArticles.findOne({
+            where: {
+                articleId, userId
+            }
+        }).then(model => {
+            const active = typeof(info.active) === 'boolean' ? info.active : model.active;
+
+            model.externalSystemId = info.externalSystemId || model.externalSystemId;
+            model.active = active
+
+            return model.save()
         });
     }
 };

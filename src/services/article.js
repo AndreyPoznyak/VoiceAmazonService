@@ -72,22 +72,31 @@ module.exports = {
         }
     },
 
-    moveToArchive: (articleId, userId) => {
-        database.getArticleById(articleId, userId)
-        .then(article => {
-            console.log(article);
-            if (article){
-                //set active to false
-                switch(article.service){
-                    case serviceTypes.POCKET:
-                    pocketProvider.sendAction()
-                    case serviceTypes.VOICE:
-                    //do nothing
-                    default:
-                    //what the fuck? set Active to false
-                }
-            } else {
-                //throw an error
+    moveToArchive: (articleId, userId, consumer_key, access_token) => {
+         return database.getArticleById(articleId, userId)
+            .then(article => {
+                console.log(article);
+                if (article && article.users) {
+                    //set active to false
+                    database.updateUserArticle(articleId, userId, { active: false })
+                    .then(userArticlesModel => {
+                        switch (article.service) {
+                            case serviceTypes.POCKET:
+                                const externalSystemId = userArticlesModel.externalSystemId
+                                pocketProvider.moveToArchive(externalSystemId, consumer_key, access_token)
+                                .then(response =>  {
+                                      return Promise.resolve(response)})
+                                break;
+                            case serviceTypes.VOICE:
+                                 return Promise.resolve();
+                                break;
+                            default:
+                                return Promise.reject();
+                        }
+                    })
+
+                } else {
+                return Promise.reject()
             }
         })
     }

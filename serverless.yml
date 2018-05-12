@@ -99,11 +99,11 @@ functions:
           path: syncDbSchema
           method: get
           cors: true
-  sendArticleAction:
-    handler: src/api/api.sendArticleAction
+  moveToArchive:
+    handler: src/api/api.moveToArchive
     events:
       - http:
-          path: article/action
+          path: articles/archive
           method: post
           cors: true
 
