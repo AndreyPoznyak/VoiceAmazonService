@@ -315,12 +315,13 @@ module.exports.addArticles = (event, context, callback) => {
         });
 };
 
-module.exports.sendArticleAction = (event, context, callback) => {
+module.exports.moveToArchive = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
     const body = JSON.parse(event.body);
 
-   articleService.moveToArchive(body.articleId, body.userId).then(response => {
+   articleService.moveToArchive(body.articleId, body.userId, body.consumer_key, body.access_token)
+   .then(response => {
         performRequestCallback(callback, Codes.CREATED, response);
    })
 };
