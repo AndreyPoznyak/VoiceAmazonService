@@ -73,31 +73,26 @@ module.exports = {
     },
 
     moveToArchive: (articleId, userId, consumer_key, access_token) => {
-         return database.getArticleById(articleId, userId)
+        return database.getArticleById(articleId, userId)
             .then(article => {
                 console.log(article);
-                if (article && article.users) {
-                    //set active to false
-                    database.updateUserArticle(articleId, userId, { active: false })
-                    .then(userArticlesModel => {
-                        switch (article.service) {
-                            case serviceTypes.POCKET:
-                                const externalSystemId = userArticlesModel.externalSystemId
-                                pocketProvider.moveToArchive(externalSystemId, consumer_key, access_token)
-                                .then(response =>  {
-                                      return Promise.resolve(response)})
-                                break;
-                            case serviceTypes.VOICE:
-                                 return Promise.resolve();
-                                break;
-                            default:
-                                return Promise.reject();
-                        }
-                    })
+                if (article && article.users && article.users[0].userArticles) {
+                    return database.updateUserArticle(articleId, userId, { active: false })
+                        .then(userArticlesModel => {
+                            switch (article.service) {
+                                case serviceTypes.POCKET:
+                                    const externalSystemId = userArticlesModel.externalSystemId
+                                    return pocketProvider.moveToArchive(externalSystemId, consumer_key, access_token)
+                                case serviceTypes.VOICE:
+                                    return Promise.resolve();
+                                default:
+                                    return Promise.reject({message: "Article belongs to unknown service"});
+                            }
+                        })
 
                 } else {
-                return Promise.reject()
-            }
-        })
+                    return Promise.reject({message: "Cannot find article or userArticles relation"});
+                }
+            })
     }
 };
