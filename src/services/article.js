@@ -84,7 +84,7 @@ module.exports = {
                                     const externalSystemId = userArticlesModel.externalSystemId
                                     return pocketProvider.moveToArchive(externalSystemId, consumer_key, access_token)
                                 case serviceTypes.VOICE:
-                                    return Promise.resolve();
+                                    return Promise.resolve({message: "Article has been moved to archive"});
                                 default:
                                     return Promise.reject({message: "Article belongs to unknown service"});
                             }
