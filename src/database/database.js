@@ -173,7 +173,7 @@ module.exports = {
                 articleId, userId
             }
         }).then(model => {
-            const active = typeof(info.active) === 'boolean' ? info.active : model.active;
+            const active = typeof (info.active) === 'boolean' ? info.active : model.active;
 
             model.externalSystemId = info.externalSystemId || model.externalSystemId;
             model.active = active

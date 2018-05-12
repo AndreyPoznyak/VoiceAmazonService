@@ -320,8 +320,11 @@ module.exports.moveToArchive = (event, context, callback) => {
 
     const body = JSON.parse(event.body);
 
-   articleService.moveToArchive(body.articleId, body.userId, body.consumer_key, body.access_token)
-   .then(response => {
-        performRequestCallback(callback, Codes.CREATED, response);
-   })
+    articleService.moveToArchive(body.articleId, body.userId, body.consumer_key, body.access_token)
+        .then(response => {
+            performRequestCallback(callback, Codes.CREATED, response);
+        })
+        .catch(error => {
+            performRequestCallback(callback, Codes.INTERNAL_ERROR, error);
+        });
 };
