@@ -72,7 +72,7 @@ module.exports = {
         }
     },
 
-    changeArticleState: (articleData, consumerKey, accessToken) => {
+    changeState: (articleData, consumerKey, accessToken) => {
         let foundArticle = null;
         return database.getArticleById(articleData.articleId, articleData.userId)
             .then(article => {
@@ -81,7 +81,7 @@ module.exports = {
                     return Promise.reject({ message: "Cannot find article or userArticles relation" });
                 }
 
-                return database.updateUserArticleState(articleData.articleId, articleData.userId, articleData.active);
+                return database.updateUserArticleState(articleData);
             })
             .then(userArticlesModel => {
                 switch (foundArticle.service) {

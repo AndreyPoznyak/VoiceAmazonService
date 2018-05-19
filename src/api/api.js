@@ -328,7 +328,7 @@ INPUT MODEL:
     "accessToken": "000-000-000"
  }
  NOTE: pass active == true to restore article from archive.
- Pass active == false to move article to archive 
+ Pass active == false to move article to archive
  */
 module.exports.changeArticleState = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
@@ -342,7 +342,7 @@ module.exports.changeArticleState = (event, context, callback) => {
         return;
     }
 
-    articleService.changeArticleState(body.articleData, body.consumerKey, body.accessToken)
+    articleService.changeState(body.articleData, body.consumerKey, body.accessToken)
         .then(response => {
             performRequestCallback(callback, Codes.SUCCESS, response);
         })
