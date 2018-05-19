@@ -72,27 +72,29 @@ module.exports = {
         }
     },
 
-    moveToArchive: (articleId, userId, consumer_key, access_token) => {
+    moveToArchive: (articleId, userId, consumerKey, accessToken) => {
+        let foundArticle = null;
         return database.getArticleById(articleId, userId)
             .then(article => {
-                console.log(article);
-                if (article && article.users && article.users[0].userArticles) {
-                    return database.updateUserArticle(articleId, userId, { active: false })
-                        .then(userArticlesModel => {
-                            switch (article.service) {
-                                case serviceTypes.POCKET:
-                                    const externalSystemId = userArticlesModel.externalSystemId
-                                    return pocketProvider.moveToArchive(externalSystemId, consumer_key, access_token)
-                                case serviceTypes.VOICE:
-                                    return Promise.resolve({message: "Article has been moved to archive"});
-                                default:
-                                    return Promise.reject({message: "Article belongs to unknown service"});
-                            }
-                        })
-
-                } else {
-                    return Promise.reject({message: "Cannot find article or userArticles relation"});
+                foundArticle = article;
+                if (!article || !article.users || !article.users[0].userArticles) {
+                    return Promise.reject({ message: "Cannot find article or userArticles relation" });
                 }
+
+                return database.updateUserArticle(articleId, userId, { active: false });
             })
+            .then(userArticlesModel => {
+                switch (foundArticle.service) {
+                    case serviceTypes.POCKET:
+                        if (!consumerKey || !accessToken) {
+                            return Promise.reject({ message: "Consumer key or access token hasn't been specified" });
+                        }
+                        return pocketProvider.moveToArchive(userArticlesModel.externalSystemId, consumerKey, accessToken);
+                    case serviceTypes.VOICE:
+                        return { message: "Article has been moved to archive" };
+                    default:
+                        return Promise.reject({ message: "Article belongs to unknown service" });
+                }
+            });
     }
 };

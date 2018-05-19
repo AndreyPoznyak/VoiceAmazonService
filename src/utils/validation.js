@@ -37,6 +37,21 @@ module.exports = {
         };
     },
 
+    isMoveToArchiveParamasSufficient: info => {
+        let success = true;
+        let errorMessage = "";
+
+        if (!info || !info.articleId || !info.userId) {
+            success = false;
+            errorMessage = "ArticleId or UserId hasn't been specified";
+        }
+
+        return {
+            success: success,
+            message: errorMessage
+        };
+    },
+
     isPocketParamsSufficient: info => {
         let success = true;
         let errorMessage = "";
