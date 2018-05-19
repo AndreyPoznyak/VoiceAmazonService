@@ -167,13 +167,14 @@ module.exports = {
         });
     },
 
-    updateUserArticleState: (articleId, userId, active) => {
+    updateUserArticleState: (articleData) => {
         return UserArticles.findOne({
             where: {
-                articleId, userId
+                articleId: articleData.articleId,
+                userId: articleData.userId
             }
         }).then(model => {
-            const newActiveState = typeof (active) === 'boolean' ? active : model.active;
+            const newActiveState = typeof (articleData.active) === 'boolean' ? articleData.active : model.active;
             model.active = newActiveState
 
             return model.save()
