@@ -100,11 +100,11 @@ functions:
           method: get
           cors: true
   moveToArchive:
-    handler: src/api/api.moveToArchive
+    handler: src/api/api.changeArticleState
     events:
       - http:
-          path: articles/archive
-          method: post
+          path: articles/state
+          method: put
           cors: true
 
 

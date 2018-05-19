@@ -52,9 +52,10 @@ module.exports = {
         }).then(response => response.ok ? response.json() : Promise.reject(response));
     },
 
-    moveToArchive: (externalSystemId, consumerKey, accessToken) => {
+    updateArticleState: (externalSystemId, active, consumerKey, accessToken) => {
+        //if active == true -> we need to post readd(restore from archive) action, otherwise move to archive
         const actionParams = {
-            "action": "archive",
+            "action": active ? "readd" : "archive",
             "item_id": externalSystemId,
             "time": new Date()
         }

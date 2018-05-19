@@ -315,19 +315,34 @@ module.exports.addArticles = (event, context, callback) => {
         });
 };
 
-module.exports.moveToArchive = (event, context, callback) => {
+/*
+PATH: PUT /articles/state
+INPUT MODEL:
+{
+    "articleData":{
+        "articleId": 1,
+        "userId": 1,
+        "active": false
+    },
+    "consumerKey": "000-000-000",
+    "accessToken": "000-000-000"
+ }
+ NOTE: pass active == true to restore article from archive.
+ Pass active == false to move article to archive 
+ */
+module.exports.changeArticleState = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
     const body = JSON.parse(event.body);
 
-    const validationResult = validator.isMoveToArchiveParamasSufficient(body);
+    const validationResult = validator.isChangeArticleStateParamasSufficient(body);
 
     if (!validationResult.success) {
         performRequestCallback(callback, Codes.BAD_REQUEST, `Error: ${validationResult.message}`);
         return;
     }
 
-    articleService.moveToArchive(body.articleId, body.userId, body.consumerKey, body.accessToken)
+    articleService.changeArticleState(body.articleData, body.consumerKey, body.accessToken)
         .then(response => {
             performRequestCallback(callback, Codes.SUCCESS, response);
         })
