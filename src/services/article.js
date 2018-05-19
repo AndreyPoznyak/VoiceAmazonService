@@ -72,16 +72,16 @@ module.exports = {
         }
     },
 
-    moveToArchive: (articleId, userId, consumerKey, accessToken) => {
+    changeArticleState: (articleData, consumerKey, accessToken) => {
         let foundArticle = null;
-        return database.getArticleById(articleId, userId)
+        return database.getArticleById(articleData.articleId, articleData.userId)
             .then(article => {
                 foundArticle = article;
                 if (!article || !article.users || !article.users[0].userArticles) {
                     return Promise.reject({ message: "Cannot find article or userArticles relation" });
                 }
 
-                return database.updateUserArticle(articleId, userId, { active: false });
+                return database.updateUserArticleState(articleData.articleId, articleData.userId, articleData.active);
             })
             .then(userArticlesModel => {
                 switch (foundArticle.service) {
@@ -89,9 +89,10 @@ module.exports = {
                         if (!consumerKey || !accessToken) {
                             return Promise.reject({ message: "Consumer key or access token hasn't been specified" });
                         }
-                        return pocketProvider.moveToArchive(userArticlesModel.externalSystemId, consumerKey, accessToken);
+                        return pocketProvider.updateArticleState(userArticlesModel.externalSystemId,
+                             articleData.active, consumerKey, accessToken);
                     case serviceTypes.VOICE:
-                        return { message: "Article has been moved to archive" };
+                        return { message: `Article state has been changed to ${articleData.active}` };
                     default:
                         return Promise.reject({ message: "Article belongs to unknown service" });
                 }

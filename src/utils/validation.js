@@ -37,13 +37,14 @@ module.exports = {
         };
     },
 
-    isMoveToArchiveParamasSufficient: info => {
+    isChangeArticleStateParamasSufficient: info => {
         let success = true;
         let errorMessage = "";
 
-        if (!info || !info.articleId || !info.userId) {
+        if (!info || !info.articleData || !info.articleData.articleId ||
+            !info.articleData.userId || typeof (info.articleData.active) !== 'boolean') {
             success = false;
-            errorMessage = "ArticleId or UserId hasn't been specified";
+            errorMessage = "Article data hasn't been specified";
         }
 
         return {
