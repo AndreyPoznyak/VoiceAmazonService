@@ -329,7 +329,7 @@ module.exports.moveToArchive = (event, context, callback) => {
 
     articleService.moveToArchive(body.articleId, body.userId, body.consumerKey, body.accessToken)
         .then(response => {
-            performRequestCallback(callback, Codes.CREATED, response);
+            performRequestCallback(callback, Codes.SUCCESS, response);
         })
         .catch(error => {
             performRequestCallback(callback, Codes.INTERNAL_ERROR, error);
