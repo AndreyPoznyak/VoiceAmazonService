@@ -320,7 +320,14 @@ module.exports.moveToArchive = (event, context, callback) => {
 
     const body = JSON.parse(event.body);
 
-    articleService.moveToArchive(body.articleId, body.userId, body.consumer_key, body.access_token)
+    const validationResult = validator.isMoveToArchiveParamasSufficient(body);
+
+    if (!validationResult.success) {
+        performRequestCallback(callback, Codes.BAD_REQUEST, `Error: ${validationResult.message}`);
+        return;
+    }
+
+    articleService.moveToArchive(body.articleId, body.userId, body.consumerKey, body.accessToken)
         .then(response => {
             performRequestCallback(callback, Codes.CREATED, response);
         })

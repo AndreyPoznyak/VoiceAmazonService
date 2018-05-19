@@ -52,7 +52,7 @@ module.exports = {
         }).then(response => response.ok ? response.json() : Promise.reject(response));
     },
 
-    moveToArchive: (externalSystemId, consumer_key, access_token) => {
+    moveToArchive: (externalSystemId, consumerKey, accessToken) => {
         const actionParams = {
             "action": "archive",
             "item_id": externalSystemId,
@@ -60,8 +60,8 @@ module.exports = {
         }
 
         const body = JSON.stringify({
-            "consumer_key": consumer_key,
-            "access_token": access_token,
+            "consumer_key": consumerKey,
+            "access_token": accessToken,
             "actions": [actionParams]
         })
 
