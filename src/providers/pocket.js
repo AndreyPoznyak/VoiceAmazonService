@@ -46,7 +46,7 @@ module.exports = {
             "output": "json"
         };
         //            "state": "unread"
-        fetch(`https://text.getpocket.com/v3/text?${queryString.stringify(params, { sort: false })}`, {
+        return fetch(`https://text.getpocket.com/v3/text?${queryString.stringify(params, { sort: false })}`, {
             method: "GET",
             headers: defaultHeaders
         }).then(response => response.ok ? response.json() : Promise.reject(response));

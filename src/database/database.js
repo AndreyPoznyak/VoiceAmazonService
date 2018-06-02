@@ -1,4 +1,5 @@
 const { sequelize, User, Article, UserArticles } = require("./models");
+const serviceTypes = require("../constants/serviceTypes");
 
 module.exports = {
 
@@ -77,7 +78,7 @@ module.exports = {
             language: article.language || null,
             text: article.text || null,
             images: article.images || null,
-            service: article.service || null,
+            service: article.service || serviceTypes.VOICE,
             pathToSpeech: article.pathToSpeech || null,
             timeAdded: article.timeAdded ? new Date(article.timeAdded * 1000) : null
         }).then(addedArticle => {
@@ -100,7 +101,15 @@ module.exports = {
         });
     },
 
-    getArticle: url => {
+    findArticleById: id => {
+        return Article.findOne({
+            where: {
+                id
+            }
+        });
+    },
+
+    findArticleByUrl: url => {
         return Article.findOne({
             where: {
                 url

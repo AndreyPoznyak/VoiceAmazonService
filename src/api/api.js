@@ -189,11 +189,20 @@ module.exports.getPocketArticles = (event, context, callback) => {
     });
 };
 
+/*
+PATH: GET /content
+INPUT MODEL: -
+QUERY PARAMS: ?userId=1&articleId=1   or    ?userId=1&url=someurl
+NOTE: consumers can get content by server article id in the majority of cases.
+But also consumer dont have article Id(breake connection or something else)
+there is and ability to get content by article url - in this case server will add new article
+or link existing article to user by url.
+ */
 module.exports.getArticlesContent = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
     const info = event.queryStringParameters;
-    const validationResult = validator.isArticleParamsSufficient(info);
+    const validationResult = validator.isGetArticlesContentParamsSufficient(info);
 
     if (!validationResult.success) {
         performRequestCallback(callback, Codes.BAD_REQUEST, `Error: ${validationResult.message}`);
@@ -201,14 +210,16 @@ module.exports.getArticlesContent = (event, context, callback) => {
     }
 
     //NOTE: it creates new article as well
+
     const handleArticleWithLinkToUser = article => {
-        return articleService.handleArticleCreation(info.userId, article).catch(error => {
-            console.log(error);
+        return articleService.handleArticleCreation(info.userId, article)
+            .catch(error => {
+                console.log(error);
 
-            performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: ${error.message}`);
+                performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: ${error.message}`);
 
-            return Promise.reject();
-        });
+                return Promise.reject();
+            });
     };
 
     const sendData = article => {
@@ -221,18 +232,17 @@ module.exports.getArticlesContent = (event, context, callback) => {
         });
     };
 
-    const handleContent = (article, linkingStatus) => {
-        pocketProvider.getContent(article.url).then(result => {
-            database.updateArticleData({
+    const handleContent = (article) => {
+        return pocketProvider.getContent(article.url).then(result => {
+            return database.updateArticleData({
                 url: result["resolvedUrl"],
                 text: result["article"],
                 images: result["images"],
                 language: result["lang"],
                 title: result["title"]
             }, article).then(() => {
-                console.log(linkingStatus);
 
-                sendData(article);
+                return sendData(article);
             }, error => {
                 console.log(error);
 
@@ -245,38 +255,41 @@ module.exports.getArticlesContent = (event, context, callback) => {
         });
     };
 
-    database.getArticle(info.url).then(article => {
-        if (article) {
-            if (articleService.isTextSaved(article)) {
-                handleArticleWithLinkToUser(article).then(linkingResult => {
-                    console.log(linkingResult);
+    if (info.articleId) {
+        database.findArticleById(info.articleId)
+            .then(article => {
 
+                if (!article) {
+                    performRequestCallback(callback, Codes.BAD_REQUEST, "Error: Cannot find article with such id");
+                }
+
+                if (articleService.isTextSaved(article)) {
                     sendData(article);
-                });
-            } else {
-                handleArticleWithLinkToUser(article).then(linkingResult => {
-                    handleContent(article, linkingResult);
-                });
-            }
-        } else {
-            handleArticleWithLinkToUser({
-                url: info.url
-            }).then(linkingResult => {
-                //TODO: maybe call the outer method again (DRY)
-                database.getArticle(info.url).then(article => {
-                    handleContent(article, linkingResult);
-                }, error => {
-                    console.log(error);
+                    return;
+                }
 
-                    performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: Not able to get just saved article from DB`);
-                });
-            });
-        }
-    }, error => {
-        console.log(error);
+                handleContent(article);
+            })
+            .catch(error => {
+                console.log(error);
+                performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: An error has occured during get content by Id`);
+            })
+        return;
+    }
 
-        performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: Not able to get the article from DB`);
-    });
+    let linkingResult;
+    articleService.handleArticleCreation(info.userId, { url: info.url })
+        .then(linkingRes => {
+            linkingResult = linkingResult
+            return database.findArticleByUrl(info.url)
+        })
+        .then(article => {
+            handleContent(article);
+        })
+        .catch(error => {
+            console.log(error);
+            performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: An error has occured during get content by url`);
+        });
 };
 
 //NOTE: not relevant atm

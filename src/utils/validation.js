@@ -79,5 +79,26 @@ module.exports = {
                 success: true
             }
         }
+    },
+
+    isGetArticlesContentParamsSufficient: info => {
+        let success = true;
+        let errorMessage = "";
+
+        //need to have articleId or url
+        if (!info || !info.userId || !(info.articleId || info.url)) {
+            success = false;
+            errorMessage = "No necessary data specified";
+        }
+
+        if (info.url && !validator.isURL(info.url)) {
+            success = false;
+            errorMessage = "The URL is invalid";
+        }
+
+        return {
+            success: success,
+            message: errorMessage
+        };
     }
 };
