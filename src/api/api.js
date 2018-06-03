@@ -209,19 +209,6 @@ module.exports.getArticlesContent = (event, context, callback) => {
         return;
     }
 
-    //NOTE: it creates new article as well
-
-    const handleArticleWithLinkToUser = article => {
-        return articleService.handleArticleCreation(info.userId, article)
-            .catch(error => {
-                console.log(error);
-
-                performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: ${error.message}`);
-
-                return Promise.reject();
-            });
-    };
-
     const sendData = article => {
         //TODO: maybe ust send the whole article
         performRequestCallback(callback, Codes.SUCCESS, {
