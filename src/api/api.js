@@ -220,6 +220,10 @@ module.exports.getArticlesContent = (event, context, callback) => {
     };
 
     const handleContent = (article) => {
+        if (articleService.isTextSaved(article)) {
+            return sendData(article);
+        };
+
         return pocketProvider.getContent(article.url).then(result => {
             return database.updateArticleData({
                 url: result["resolvedUrl"],
@@ -248,11 +252,6 @@ module.exports.getArticlesContent = (event, context, callback) => {
 
                 if (!article) {
                     performRequestCallback(callback, Codes.BAD_REQUEST, "Error: Cannot find article with such id");
-                }
-
-                if (articleService.isTextSaved(article)) {
-                    sendData(article);
-                    return;
                 }
 
                 handleContent(article);
