@@ -194,8 +194,8 @@ PATH: GET /content
 INPUT MODEL: -
 QUERY PARAMS: ?userId=1&articleId=1   or    ?userId=1&url=someurl
 NOTE: consumers can get content by server article id in the majority of cases.
-But also consumer dont have article Id(breake connection or something else)
-there is and ability to get content by article url - in this case server will add new article
+But if consumer doesn't have article Id(breake connection or something else)
+there is an ability to get content by article url - in this case server will add new article
 or link existing article to user by url.
  */
 module.exports.getArticlesContent = (event, context, callback) => {
