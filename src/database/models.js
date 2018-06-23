@@ -26,7 +26,12 @@ const User = sequelize.define("user", {
 
 const Article = sequelize.define("article", {
     service: Sequelize.STRING, //without relation for now, "voice" or "pocket" :)
+    //store in this column resolved_url for Pocket articles and any url for Voice articles
+    //this field is unique
     url: Sequelize.STRING(2000),
+    //store in this column resolved_url from Pocket response after parsing content.
+    //this field is not unique and needed mainaly for Voice articles just in case
+    resolvedUrl: Sequelize.STRING(2000),
     title: Sequelize.STRING(500),//todo: trim title before adding?
     language: Sequelize.STRING,
     images: Sequelize.TEXT, //json with images data
