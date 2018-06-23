@@ -75,7 +75,7 @@ module.exports = {
     saveArticle: (userInfo, article) => {
         return Article.create({
             url: article.url,
-            resolvedUrl: article.resolvedUrl,
+            resolvedUrl: article.resolvedUrl || null,
             title: article.title || null,
             language: article.language || null,
             text: article.text || null,
