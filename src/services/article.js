@@ -64,6 +64,7 @@ module.exports = {
     getArticleDto: (pocketArticle) => {
         return {
             url: pocketArticle.resolved_url,
+            resolvedUrl: pocketArticle.resolved_url,
             title: pocketArticle.resolved_title || null,
             service: serviceTypes.POCKET,
             timeAdded: pocketArticle.time_added, //maybe it should be a column in UserArticles table. Could be needed for order in articleTable view

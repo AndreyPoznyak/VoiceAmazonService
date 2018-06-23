@@ -6,6 +6,7 @@ module.exports = {
     syncDbSchema: (info) => {
         //we can extend this func in future
         return sequelize.sync({ force: info.force || false })
+        //return Article.sync({ force: info.force || false })
 
         //syncDbSchema: () => sequelize.sync({ force: true }),
         //syncDbSchema: () => Article.sync({ force: true }),
@@ -74,6 +75,7 @@ module.exports = {
     saveArticle: (userInfo, article) => {
         return Article.create({
             url: article.url,
+            url: article.resolvedUrl,
             title: article.title || null,
             language: article.language || null,
             text: article.text || null,
@@ -125,6 +127,7 @@ module.exports = {
         article.language = parameters.language || article.language;
         article.service = parameters.service || article.service;
         article.url = parameters.url || article.url;
+        article.resolvedUrl = parameters.resolvedUrl || article.resolvedUrl;
         article.title = parameters.title || article.title;
 
         return article.save();

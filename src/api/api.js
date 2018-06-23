@@ -226,7 +226,7 @@ module.exports.getArticlesContent = (event, context, callback) => {
 
         return pocketProvider.getContent(article.url).then(result => {
             return database.updateArticleData({
-                url: result["resolvedUrl"],
+                resolvedUrl: result["resolvedUrl"],
                 text: result["article"],
                 images: result["images"],
                 language: result["lang"],
