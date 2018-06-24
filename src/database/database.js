@@ -6,6 +6,7 @@ module.exports = {
     syncDbSchema: (info) => {
         //we can extend this func in future
         return sequelize.sync({ force: info.force || false })
+        //return Article.sync({ force: info.force || false })
 
         //syncDbSchema: () => sequelize.sync({ force: true }),
         //syncDbSchema: () => Article.sync({ force: true }),

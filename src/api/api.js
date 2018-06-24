@@ -219,6 +219,7 @@ module.exports.getArticlesContent = (event, context, callback) => {
                 return handleContent(article);
             })
             .catch(error => {
+
                 console.log(error);
                 return performRequestCallback(callback, Codes.INTERNAL_ERROR, error.message);
             });;
