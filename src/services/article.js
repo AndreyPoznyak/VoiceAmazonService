@@ -59,8 +59,6 @@ module.exports = {
         });
     },
 
-    isTextSaved: article => article && article.ArticleContent && !!article.ArticleContent.text,
-
     getArticleDto: (pocketArticle) => {
         return {
             url: pocketArticle.resolved_url,
