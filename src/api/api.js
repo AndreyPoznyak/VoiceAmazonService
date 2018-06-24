@@ -222,7 +222,7 @@ module.exports.getArticlesContent = (event, context, callback) => {
 
                 console.log(error);
                 return performRequestCallback(callback, Codes.INTERNAL_ERROR, error.message);
-            });;
+            });
     }
 
     return database.findArticleWithContentById(info.articleId)
