@@ -1,4 +1,4 @@
-const { sequelize, User, Article, UserArticles } = require("./models");
+const { sequelize, User, Article, UserArticles, ArticleContent } = require("./models");
 const serviceTypes = require("../constants/serviceTypes");
 
 module.exports = {
@@ -6,7 +6,6 @@ module.exports = {
     syncDbSchema: (info) => {
         //we can extend this func in future
         return sequelize.sync({ force: info.force || false })
-        //return Article.sync({ force: info.force || false })
 
         //syncDbSchema: () => sequelize.sync({ force: true }),
         //syncDbSchema: () => Article.sync({ force: true }),
@@ -78,8 +77,6 @@ module.exports = {
             resolvedUrl: article.resolvedUrl || null,
             title: article.title || null,
             language: article.language || null,
-            text: article.text || null,
-            images: article.images || null,
             service: article.service || serviceTypes.VOICE,
             pathToSpeech: article.pathToSpeech || null,
             timeAdded: article.timeAdded ? new Date(article.timeAdded * 1000) : null
@@ -103,16 +100,22 @@ module.exports = {
         });
     },
 
-    findArticleById: id => {
+    findArticleWithContentById: id => {
         return Article.findOne({
+            include: [{
+                model: ArticleContent
+            }],
             where: {
                 id
             }
         });
     },
 
-    findArticleByUrl: url => {
+    findArticleWithContentByUrl: url => {
         return Article.findOne({
+            include: [{
+                model: ArticleContent
+            }],
             where: {
                 url
             }
@@ -122,15 +125,36 @@ module.exports = {
     updateArticleData: (parameters, article) => {
         console.log(`Updating parameters of article ${article.id}`);
 
-        article.text = parameters.text ? JSON.stringify(parameters.text) : article.text;
-        article.images = parameters.images ? JSON.stringify(parameters.images) : article.images;
         article.language = parameters.language || article.language;
         article.service = parameters.service || article.service;
         article.url = parameters.url || article.url;
         article.resolvedUrl = parameters.resolvedUrl || article.resolvedUrl;
         article.title = parameters.title || article.title;
 
-        return article.save();
+        return article.getArticleContent()
+            .then(existingContent => {
+                //update existing content or create new
+                if (existingContent) {
+                    existingContent.text = parameters.text ? JSON.stringify(parameters.text) : existingContent.text;
+                    existingContent.images = parameters.images ? JSON.stringify(parameters.images) : existingContent.images;
+                    return existingContent;
+                }
+
+                return ArticleContent.create({
+                    text: parameters.text ? JSON.stringify(parameters.text) : null,
+                    images: parameters.images ? JSON.stringify(parameters.images) : null
+                });
+            })
+            .then(content => {
+                return article.setArticleContent(content);
+            })
+            .then(() => {
+                return article.save();
+            })
+            .catch(error => {
+                console.log(error);
+                reject({message: "Error: Not able to update article's content"});
+            });
     },
 
     getUsersArticles: (userId) => {
@@ -163,6 +187,8 @@ module.exports = {
                     attributes: ["externalSystemId", "active", "id"],
                     where: { userId }
                 }
+            }, {
+                model: ArticleContent
             }],
             where: {
                 id: articleId,

@@ -34,8 +34,6 @@ const Article = sequelize.define("article", {
     resolvedUrl: Sequelize.STRING(2000),
     title: Sequelize.STRING(500),//todo: trim title before adding?
     language: Sequelize.STRING,
-    images: Sequelize.TEXT, //json with images data
-    text: Sequelize.TEXT,
     pathToSpeech: Sequelize.STRING,
     timeAdded: Sequelize.DATE //TODO: why do we need it?
 }, {
@@ -47,6 +45,14 @@ const Article = sequelize.define("article", {
         ]
     });
 
+const ArticleContent = sequelize.define("articleContent", {
+    images: Sequelize.TEXT, //json with images data
+    text: Sequelize.TEXT,
+}, {
+        freezeTableName: true,
+        tableName: 'articleContent'
+    });
+
 const UserArticles = sequelize.define("userArticles", {
     externalSystemId: Sequelize.STRING,
     active: Sequelize.BOOLEAN
@@ -55,9 +61,14 @@ const UserArticles = sequelize.define("userArticles", {
 User.belongsToMany(Article, { through: UserArticles });
 Article.belongsToMany(User, { through: UserArticles });
 
+Article.hasOne(ArticleContent);
+//ArticleContent.belongsTo(Article);
+//Article.belongsTo(ArticleContent);
+
 module.exports = {
     sequelize,
     User,
     Article,
-    UserArticles
+    UserArticles,
+    ArticleContent
 };

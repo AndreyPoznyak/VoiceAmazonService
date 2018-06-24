@@ -59,7 +59,7 @@ module.exports = {
         });
     },
 
-    isTextSaved: article => !!article.text,
+    isTextSaved: article => article && article.ArticleContent && !!article.ArticleContent.text,
 
     getArticleDto: (pocketArticle) => {
         return {

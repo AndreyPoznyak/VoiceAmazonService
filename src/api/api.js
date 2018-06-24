@@ -209,73 +209,66 @@ module.exports.getArticlesContent = (event, context, callback) => {
         return;
     }
 
-    const sendData = article => {
-        //TODO: maybe ust send the whole article
-        performRequestCallback(callback, Codes.SUCCESS, {
-            article: JSON.parse(article.text),
-            lang: article.language,
-            images: JSON.parse(article.images),
-            url: article.url
-        });
-    };
-
-    const handleContent = (article) => {
-        if (articleService.isTextSaved(article)) {
-            return sendData(article);
-        };
-
-        return pocketProvider.getContent(article.url).then(result => {
-            return database.updateArticleData({
-                resolvedUrl: result["resolvedUrl"],
-                text: result["article"],
-                images: result["images"],
-                language: result["lang"],
-                title: result["title"]
-            }, article).then(() => {
-
-                return sendData(article);
-            }, error => {
-                console.log(error);
-
-                performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Not able to save article's text");
-            });
-        }, error => {
-            console.log(error);
-
-            performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't get parsed article's text from Pocket");
-        });
-    };
-
-    if (info.articleId) {
-        database.findArticleById(info.articleId)
+    if (info.url) {
+        //create article if not exist and link to user
+        return articleService.handleArticleCreation(info.userId, { url: info.url })
+            .then(linkingRes => {
+                return database.findArticleWithContentByUrl(info.url)
+            })
             .then(article => {
-
-                if (!article) {
-                    performRequestCallback(callback, Codes.BAD_REQUEST, "Error: Cannot find article with such id");
-                }
-
-                handleContent(article);
+                return handleContent(article);
             })
             .catch(error => {
                 console.log(error);
-                performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: An error has occured during get content by Id`);
-            })
-        return;
+                return performRequestCallback(callback, Codes.INTERNAL_ERROR, error.message);
+            });;
     }
 
-    let linkingResult;
-    articleService.handleArticleCreation(info.userId, { url: info.url })
-        .then(linkingRes => {
-            linkingResult = linkingResult
-            return database.findArticleByUrl(info.url)
-        })
+    return database.findArticleWithContentById(info.articleId)
         .then(article => {
-            handleContent(article);
+            return handleContent(article);
         })
         .catch(error => {
             console.log(error);
-            performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: An error has occured during get content by url`);
+            return performRequestCallback(callback, Codes.INTERNAL_ERROR, error.message);
         });
+
+    const handleContent = (article) => {
+
+        //check whether content exist or not
+        if (article.articleContent) {
+            return sendData(article);
+        }
+
+        //get content from pocket, save in db and get article with content again
+        return pocketProvider.getContent(article.url)
+            .then(result => {
+                return database.updateArticleData({
+                    resolvedUrl: result["resolvedUrl"],
+                    text: result["article"],
+                    images: result["images"],
+                    language: result["lang"],
+                    title: result["title"]
+                }, article)
+            })
+            .then(() => {
+                //get updated article data
+                return database.findArticleWithContentById(article.id)
+            })
+            .then(updatedArticleWithContent => {
+                return sendData(updatedArticleWithContent);
+            });
+    }
+
+    const sendData = article => {
+        //TODO: maybe ust send the whole article
+        performRequestCallback(callback, Codes.SUCCESS, {
+            article: JSON.parse(article.articleContent.text),
+            lang: article.language,
+            images: JSON.parse(article.articleContent.images),
+            url: article.url
+        });
+    }
 };
 
 //NOTE: not relevant atm
