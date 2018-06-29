@@ -209,72 +209,53 @@ module.exports.getArticlesContent = (event, context, callback) => {
         return;
     }
 
-    const sendData = article => {
-        //TODO: maybe ust send the whole article
-        performRequestCallback(callback, Codes.SUCCESS, {
-            article: JSON.parse(article.text),
-            lang: article.language,
-            images: JSON.parse(article.images),
-            url: article.url
-        });
-    };
-
     const handleContent = (article) => {
-        if (articleService.isTextSaved(article)) {
+
+        if (article.articleContent) {
             return sendData(article);
-        };
+        }
 
-        return pocketProvider.getContent(article.url).then(result => {
-            return database.updateArticleData({
-                resolvedUrl: result["resolvedUrl"],
-                text: result["article"],
-                images: result["images"],
-                language: result["lang"],
-                title: result["title"]
-            }, article).then(() => {
-
-                return sendData(article);
-            }, error => {
-                console.log(error);
-
-                performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Not able to save article's text");
-            });
-        }, error => {
-            console.log(error);
-
-            performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't get parsed article's text from Pocket");
-        });
-    };
-
-    if (info.articleId) {
-        database.findArticleById(info.articleId)
-            .then(article => {
-
-                if (!article) {
-                    performRequestCallback(callback, Codes.BAD_REQUEST, "Error: Cannot find article with such id");
-                }
-
-                handleContent(article);
+        //get content from pocket, save in db and get article with content again
+        return pocketProvider.getContent(article.url)
+            .then(result => {
+                return database.updateArticleData({
+                    resolvedUrl: result["resolvedUrl"],
+                    text: result["article"],
+                    images: result["images"],
+                    language: result["lang"],
+                    title: result["title"]
+                }, article)
             })
-            .catch(error => {
-                console.log(error);
-                performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: An error has occured during get content by Id`);
-            })
-        return;
+            //get updated article data
+            .then(() => database.findArticleById(article.id))
+            .then(updatedArticleWithContent => sendData(updatedArticleWithContent));
     }
 
-    let linkingResult;
-    articleService.handleArticleCreation(info.userId, { url: info.url })
-        .then(linkingRes => {
-            linkingResult = linkingResult
-            return database.findArticleByUrl(info.url)
-        })
-        .then(article => {
-            handleContent(article);
-        })
+    const sendData = article => {
+        performRequestCallback(callback, Codes.SUCCESS, {
+            article: JSON.parse(article.articleContent.text),
+            lang: article.language,
+            images: JSON.parse(article.articleContent.images),
+            url: article.url
+        });
+    }
+
+    if (info.url) {
+        //create article if not exist and link to user
+        return articleService.handleArticleCreation(info.userId, { url: info.url })
+            .then(linkingRes => database.findArticleByUrl(info.url))
+            .then(article => handleContent(article))
+            .catch(error => {
+                console.log(error);
+                return performRequestCallback(callback, Codes.INTERNAL_ERROR, error.message);
+            });
+    }
+
+    return database.findArticleById(info.articleId)
+        .then(article => handleContent(article))
         .catch(error => {
             console.log(error);
-            performRequestCallback(callback, Codes.INTERNAL_ERROR, `Error: An error has occured during get content by url`);
+            return performRequestCallback(callback, Codes.INTERNAL_ERROR, error.message);
         });
 };
 
