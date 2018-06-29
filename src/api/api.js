@@ -209,34 +209,8 @@ module.exports.getArticlesContent = (event, context, callback) => {
         return;
     }
 
-    if (info.url) {
-        //create article if not exist and link to user
-        return articleService.handleArticleCreation(info.userId, { url: info.url })
-            .then(linkingRes => {
-                return database.findArticleWithContentByUrl(info.url)
-            })
-            .then(article => {
-                return handleContent(article);
-            })
-            .catch(error => {
-
-                console.log(error);
-                return performRequestCallback(callback, Codes.INTERNAL_ERROR, error.message);
-            });
-    }
-
-    return database.findArticleWithContentById(info.articleId)
-        .then(article => {
-            return handleContent(article);
-        })
-        .catch(error => {
-            console.log(error);
-            return performRequestCallback(callback, Codes.INTERNAL_ERROR, error.message);
-        });
-
     const handleContent = (article) => {
 
-        //check whether content exist or not
         if (article.articleContent) {
             return sendData(article);
         }
@@ -252,17 +226,12 @@ module.exports.getArticlesContent = (event, context, callback) => {
                     title: result["title"]
                 }, article)
             })
-            .then(() => {
-                //get updated article data
-                return database.findArticleWithContentById(article.id)
-            })
-            .then(updatedArticleWithContent => {
-                return sendData(updatedArticleWithContent);
-            });
+            //get updated article data
+            .then(() => database.findArticleById(article.id))
+            .then(updatedArticleWithContent => sendData(updatedArticleWithContent));
     }
 
     const sendData = article => {
-        //TODO: maybe ust send the whole article
         performRequestCallback(callback, Codes.SUCCESS, {
             article: JSON.parse(article.articleContent.text),
             lang: article.language,
@@ -270,6 +239,24 @@ module.exports.getArticlesContent = (event, context, callback) => {
             url: article.url
         });
     }
+
+    if (info.url) {
+        //create article if not exist and link to user
+        return articleService.handleArticleCreation(info.userId, { url: info.url })
+            .then(linkingRes => database.findArticleByUrl(info.url))
+            .then(article => handleContent(article))
+            .catch(error => {
+                console.log(error);
+                return performRequestCallback(callback, Codes.INTERNAL_ERROR, error.message);
+            });
+    }
+
+    return database.findArticleById(info.articleId)
+        .then(article => handleContent(article))
+        .catch(error => {
+            console.log(error);
+            return performRequestCallback(callback, Codes.INTERNAL_ERROR, error.message);
+        });
 };
 
 //NOTE: not relevant atm

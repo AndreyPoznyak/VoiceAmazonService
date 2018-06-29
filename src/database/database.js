@@ -101,7 +101,7 @@ module.exports = {
         });
     },
 
-    findArticleWithContentById: id => {
+    findArticleById: id => {
         return Article.findOne({
             include: [{
                 model: ArticleContent
@@ -112,7 +112,7 @@ module.exports = {
         });
     },
 
-    findArticleWithContentByUrl: url => {
+    findArticleByUrl: url => {
         return Article.findOne({
             include: [{
                 model: ArticleContent
@@ -146,12 +146,8 @@ module.exports = {
                     images: parameters.images ? JSON.stringify(parameters.images) : null
                 });
             })
-            .then(content => {
-                return article.setArticleContent(content);
-            })
-            .then(() => {
-                return article.save();
-            })
+            .then(content => article.setArticleContent(content))
+            .then(() => article.save())
             .catch(error => {
                 console.log(error);
                 reject({message: "Error: Not able to update article's content"});
