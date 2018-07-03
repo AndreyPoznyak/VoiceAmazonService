@@ -78,19 +78,17 @@ module.exports = {
             resolvedUrl: article.resolvedUrl || null,
             title: article.title || null,
             language: article.language || null,
-            service: article.service || serviceTypes.VOICE,
-            pathToSpeech: article.pathToSpeech || null,
-            timeAdded: article.timeAdded ? new Date(article.timeAdded * 1000) : null
+            pathToSpeech: article.pathToSpeech || null
         }).then(addedArticle => {
-            return addedArticle.addUser(userInfo.userId, {
-                through: {
-                    externalSystemId: userInfo.externalSystemId || null,
-                    active: userInfo.active || true
-                }
-            }).then(() => {
-                return addedArticle;
-            });
-        })
+                return addedArticle.addUser(userInfo.userId, {
+                    through: {
+                        externalSystemId: userInfo.externalSystemId || null,
+                        active: userInfo.active || true,
+                        service: article.service || serviceTypes.VOICE,
+                        timeAdded: article.timeAdded ? new Date(article.timeAdded * 1000) : new Date(Date.now())
+                    }
+                }).then(() => addedArticle);
+            })
     },
 
     getAllArticles: () => {
@@ -127,7 +125,6 @@ module.exports = {
         console.log(`Updating parameters of article ${article.id}`);
 
         article.language = parameters.language || article.language;
-        article.service = parameters.service || article.service;
         article.url = parameters.url || article.url;
         article.resolvedUrl = parameters.resolvedUrl || article.resolvedUrl;
         article.title = parameters.title || article.title;
@@ -181,7 +178,7 @@ module.exports = {
             include: [{
                 model: User,
                 through: {
-                    attributes: ["externalSystemId", "active", "id"],
+                    attributes: ["externalSystemId", "active", "id", "service", "timeAdded"],
                     where: { userId }
                 }
             }, {
@@ -197,7 +194,9 @@ module.exports = {
         return article.addUser(info.userId, {
             through: {
                 externalSystemId: info.externalSystemId || null,
-                active: info.active || true
+                active: info.active || true,
+                service: article.service || serviceTypes.VOICE,
+                timeAdded: article.timeAdded ? new Date(article.timeAdded * 1000) : new Date(Date.now())
             }
         });
     },

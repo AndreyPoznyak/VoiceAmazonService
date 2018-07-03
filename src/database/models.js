@@ -25,7 +25,6 @@ const User = sequelize.define("user", {
     });
 
 const Article = sequelize.define("article", {
-    service: Sequelize.STRING, //without relation for now, "voice" or "pocket" :)
     //store in this column resolved_url for Pocket articles and any url for Voice articles
     //this field is unique
     url: Sequelize.STRING(2000),
@@ -34,8 +33,7 @@ const Article = sequelize.define("article", {
     resolvedUrl: Sequelize.STRING(2000),
     title: Sequelize.STRING(500),//todo: trim title before adding?
     language: Sequelize.STRING,
-    pathToSpeech: Sequelize.STRING,
-    timeAdded: Sequelize.DATE //TODO: why do we need it?
+    pathToSpeech: Sequelize.STRING
 }, {
         indexes: [
             {
@@ -55,15 +53,15 @@ const ArticleContent = sequelize.define("articleContent", {
 
 const UserArticles = sequelize.define("userArticles", {
     externalSystemId: Sequelize.STRING,
-    active: Sequelize.BOOLEAN
+    active: Sequelize.BOOLEAN,
+    service: Sequelize.STRING,
+    timeAdded: Sequelize.DATE 
 });
 
 User.belongsToMany(Article, { through: UserArticles });
 Article.belongsToMany(User, { through: UserArticles });
 
 Article.hasOne(ArticleContent);
-//ArticleContent.belongsTo(Article);
-//Article.belongsTo(ArticleContent);
 
 module.exports = {
     sequelize,

@@ -65,17 +65,15 @@ module.exports = {
             resolvedUrl: pocketArticle.resolved_url,
             title: pocketArticle.resolved_title || null,
             service: serviceTypes.POCKET,
-            timeAdded: pocketArticle.time_added, //maybe it should be a column in UserArticles table. Could be needed for order in articleTable view
+            timeAdded: pocketArticle.time_added,
             externalSystemId: pocketArticle.resolved_id,
             active: pocketArticle.status == "0"
         }
     },
 
     changeState: (articleData, consumerKey, accessToken) => {
-        let foundArticle = null;
         return database.getArticleById(articleData.articleId, articleData.userId)
             .then(article => {
-                foundArticle = article;
                 if (!article || !article.users || !article.users[0].userArticles) {
                     return Promise.reject({ message: "Cannot find article or userArticles relation" });
                 }
@@ -83,7 +81,7 @@ module.exports = {
                 return database.updateUserArticleState(articleData);
             })
             .then(userArticlesModel => {
-                switch (foundArticle.service) {
+                switch (userArticlesModel.service) {
                     case serviceTypes.POCKET:
                         if (!consumerKey || !accessToken) {
                             return Promise.reject({ message: "Consumer key or access token hasn't been specified" });
