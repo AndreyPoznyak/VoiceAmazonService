@@ -75,14 +75,21 @@ functions:
     handler: src/api/api.getAllArticles
     events:
       - http:
-          path: articles
+          path: articles/all
           method: get
           cors: true
   getPocketArticles:
     handler: src/api/api.getPocketArticles
     events:
       - http:
-          path: pocket
+          path: articles/pocket
+          method: get
+          cors: true
+  getVoiceArticles:
+    handler: src/api/api.getVoiceArticles
+    events:
+      - http:
+          path: articles/voice
           method: get
           cors: true
   getArticlesContent:

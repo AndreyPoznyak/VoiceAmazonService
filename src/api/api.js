@@ -4,6 +4,7 @@ const validator = require("../utils/validation");
 const Codes = require("../constants/httpCodes");
 const helper = require("../utils/helper");
 const articleService = require("../services/article");
+const serviceTypes = require("../constants/serviceTypes");
 
 const performRequestCallback = (callback, statusCode, body) => callback(null, { statusCode, body: JSON.stringify(body, null, 4) });
 
@@ -104,6 +105,13 @@ module.exports.addUser = (event, context, callback) => {
 };
 
 //Articles API
+
+/*
+PATH: GET /articles/all
+INPUT MODEL: -
+QUERY PARAMS: ?userId=1 or without any params
+NOTE: returns all user articles if userId was specified or returns all articles from article table
+ */
 module.exports.getAllArticles = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
@@ -113,7 +121,8 @@ module.exports.getAllArticles = (event, context, callback) => {
 
     //TODO: copy-paste can be removed here
     if (info && info.userId) {
-        database.getUsersArticles(info.userId).then(articles => {
+        database.getUsersArticles(info.userId)
+        .then(articles => {
             performRequestCallback(callback, Codes.SUCCESS, articles);
         }, error => {
             console.log(error);
@@ -122,7 +131,8 @@ module.exports.getAllArticles = (event, context, callback) => {
             performRequestCallback(callback, Codes.NOT_FOUND, "Error: Can't get user's articles from DB");
         });
     } else {
-        database.getAllArticles().then(articles => {
+        database.getAllArticles()
+        .then(articles => {
             performRequestCallback(callback, Codes.SUCCESS, articles);
         }, error => {
             console.log(error);
@@ -132,8 +142,40 @@ module.exports.getAllArticles = (event, context, callback) => {
     }
 };
 
-//TODO: add user id in order to set up the relation
-//TODO: save the articles
+/*
+PATH: GET /articles/voice
+INPUT MODEL: -
+QUERY PARAMS: ?userId=1
+NOTE: returns articles with service === voice
+ */
+module.exports.getVoiceArticles = (event, context, callback) => {
+    context.callbackWaitsForEmptyEventLoop = false;
+
+    const info = event.queryStringParameters;
+    const validationResult = validator.isGetVoiceArticlesParamsSufficient(info);
+
+    if (!validationResult.success) {
+        performRequestCallback(callback, Codes.BAD_REQUEST, `Error: ${validationResult.message}`);
+        return;
+    }
+    console.log("Getting Voice articles request");
+
+    database.getUsersArticles(info.userId, serviceTypes.VOICE)
+    .then(articles => {
+        performRequestCallback(callback, Codes.SUCCESS, articles);
+    }, error => {
+        console.log(error);
+
+        performRequestCallback(callback, Codes.NOT_FOUND, "Error: Can't get user's Voice articles from DB");
+    });
+};
+
+/*
+PATH: GET /articles/pocket
+INPUT MODEL: -
+QUERY PARAMS: ?accessToken=4b70fcad-ff4b-9ebc-cd49-1a73df&consumerKey=63497-a7f14af78faac366dd755311&userId=1
+NOTE: make a call to PocketApi, then add and link articles to user in DB if needed
+ */
 module.exports.getPocketArticles = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 

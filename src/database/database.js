@@ -1,5 +1,6 @@
 const { sequelize, User, Article, UserArticles, ArticleContent } = require("./models");
 const serviceTypes = require("../constants/serviceTypes");
+const Op = sequelize.Op;
 
 module.exports = {
 
@@ -151,13 +152,29 @@ module.exports = {
             });
     },
 
-    getUsersArticles: (userId) => {
-        return User.findOne({
-            include: [{ model: Article }],
-            where: { id: userId }
-        }).then(user => {
-            return user ? user.articles : Promise.reject("There is no such user")
-        });
+    getUsersArticles: (userId, service) => {
+        return (service != null ?
+            UserArticles.findAll({
+                where: {
+                    userId: userId,
+                    service: service
+                }
+            }) :
+            UserArticles.findAll({
+                where: {
+                    userId: userId
+                }
+            }))
+            .then(userArticles => {
+                const userArticlesHasValues = userArticles && userArticles.length;
+                const articleIds = userArticlesHasValues ? userArticles.map(ua => ua.articleId) : [];
+
+                return Article.findAll({
+                    where: {
+                        id: { [Op.in]: articleIds }
+                    }
+                })
+            });
     },
 
     //TODO: rethink it since it deals with 1 user only and 1 article only - maybe use method above
