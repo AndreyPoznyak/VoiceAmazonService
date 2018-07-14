@@ -207,13 +207,13 @@ module.exports = {
         });
     },
 
-    linkArticleToUser: (info, article) => {
-        return article.addUser(info.userId, {
+    linkArticleToUser: (userInfo, article) => {
+        return article.addUser(userInfo.userId, {
             through: {
-                externalSystemId: info.externalSystemId || null,
-                active: info.active || true,
-                service: article.service || serviceTypes.VOICE,
-                timeAdded: article.timeAdded ? new Date(article.timeAdded * 1000) : new Date(Date.now())
+                externalSystemId: userInfo.externalSystemId || null,
+                active: userInfo.active || true,
+                service: userInfo.service || serviceTypes.VOICE,
+                timeAdded: userInfo.timeAdded ? new Date(userInfo.timeAdded * 1000) : new Date(Date.now())
             }
         });
     },
@@ -230,5 +230,15 @@ module.exports = {
 
             return model.save()
         });
+    },
+
+    deleteUserArticleRelation: (userId, articleId) => {
+        return UserArticles.destroy({
+            where: {
+                articleId: articleId,
+                userId: userId
+            }
+        })
     }
+
 };

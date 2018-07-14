@@ -372,3 +372,29 @@ module.exports.changeArticleState = (event, context, callback) => {
             performRequestCallback(callback, Codes.INTERNAL_ERROR, error);
         });
 };
+
+/*
+PATH: DELETE /articles
+QUERY PARAMS: ?userId=1&articleId=1
+ NOTE: Only for Voice articles. Delete the relation between user and article.
+ */
+module.exports.deleteArticle = (event, context, callback) => {
+    context.callbackWaitsForEmptyEventLoop = false;
+
+    const info = event.queryStringParameters;
+
+    const validationResult = validator.isDeleteArticleParamasSufficient(info);
+
+    if (!validationResult.success) {
+        performRequestCallback(callback, Codes.BAD_REQUEST, `Error: ${validationResult.message}`);
+        return;
+    }
+
+    articleService.deleteVoiceArticle(info.userId, info.articleId)
+        .then(response => {
+            performRequestCallback(callback, Codes.SUCCESS, 'Article has been successfully deleted');
+        })
+        .catch(error => {
+            performRequestCallback(callback, Codes.INTERNAL_ERROR, error);
+        });
+};

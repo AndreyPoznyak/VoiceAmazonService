@@ -11,7 +11,9 @@ module.exports = {
                     let userInfo = {
                         userId: userId,
                         externalSystemId: article.externalSystemId,
-                        active: article.active
+                        active: article.active,
+                        service: article.service,
+                        timeAdded: article.timeAdded
                     };
 
                     if (articleWithUsers) {
@@ -94,5 +96,34 @@ module.exports = {
                         return Promise.reject({ message: "Article belongs to unknown service" });
                 }
             });
+    },
+
+    deleteVoiceArticle: (userId, articleId) => {
+        return database.getArticleById(articleId, userId)
+            .then(article => {
+                if (!article || !article.users || !article.users[0].userArticles) {
+                    return Promise.reject({ message: "Cannot find article or userArticles relation" });
+                }
+
+                if (article.users[0].userArticles.service !== serviceTypes.VOICE) {
+                    return Promise.reject({ message: "Cannot delete article with service type not equals to Voice" });
+                }
+
+                return database.deleteUserArticleRelation(userId, articleId);
+            })
+            // .then(userArticlesModel => {
+            //     // switch (userArticlesModel.service) {
+            //     //     case serviceTypes.POCKET:
+            //     //         if (!consumerKey || !accessToken) {
+            //     //             return Promise.reject({ message: "Consumer key or access token hasn't been specified" });
+            //     //         }
+            //     //         return pocketProvider.updateArticleState(userArticlesModel.externalSystemId,
+            //     //              articleData.active, consumerKey, accessToken);
+            //     //     case serviceTypes.VOICE:
+            //     //         return { message: `Article state has been changed to ${articleData.active}` };
+            //     //     default:
+            //     //         return Promise.reject({ message: "Article belongs to unknown service" });
+            //     // }
+            // });
     }
 };

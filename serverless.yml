@@ -113,6 +113,19 @@ functions:
           path: articles/state
           method: put
           cors: true
+  deleteArticle:
+    handler: src/api/api.deleteArticle
+    events:
+      - http:
+          path: articles
+          method: delete
+          cors: true
+          # private: true
+          # request:
+          #   parameters:
+          #     paths:
+          #       userId: true
+          #       articleId: true
 
 
 
