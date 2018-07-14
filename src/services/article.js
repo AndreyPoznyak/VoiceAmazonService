@@ -111,19 +111,5 @@ module.exports = {
 
                 return database.deleteUserArticleRelation(userId, articleId);
             })
-            // .then(userArticlesModel => {
-            //     // switch (userArticlesModel.service) {
-            //     //     case serviceTypes.POCKET:
-            //     //         if (!consumerKey || !accessToken) {
-            //     //             return Promise.reject({ message: "Consumer key or access token hasn't been specified" });
-            //     //         }
-            //     //         return pocketProvider.updateArticleState(userArticlesModel.externalSystemId,
-            //     //              articleData.active, consumerKey, accessToken);
-            //     //     case serviceTypes.VOICE:
-            //     //         return { message: `Article state has been changed to ${articleData.active}` };
-            //     //     default:
-            //     //         return Promise.reject({ message: "Article belongs to unknown service" });
-            //     // }
-            // });
     }
 };
