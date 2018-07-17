@@ -153,18 +153,24 @@ module.exports = {
     },
 
     getUsersArticles: (userId, service) => {
-        return (service != null ?
-            UserArticles.findAll({
+        let userArticlesPromise;
+
+        if (service != null) {
+            userArticlesPromise = UserArticles.findAll({
                 where: {
                     userId: userId,
                     service: service
                 }
-            }) :
-            UserArticles.findAll({
+            });
+        } else {
+            userArticlesPromise = UserArticles.findAll({
                 where: {
                     userId: userId
                 }
-            }))
+            });
+        }
+
+        return userArticlesPromise
             .then(userArticles => {
                 const userArticlesHasValues = userArticles && userArticles.length;
                 const articleIds = userArticlesHasValues ? userArticles.map(ua => ua.articleId) : [];
