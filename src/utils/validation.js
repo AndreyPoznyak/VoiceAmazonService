@@ -100,5 +100,37 @@ module.exports = {
             success: success,
             message: errorMessage
         };
+    },
+
+    isGetVoiceArticlesParamsSufficient: info => {
+        let success = true;
+        let errorMessage = "";
+
+        //need to have articleId or url
+        if (!info || !info.userId) {
+            success = false;
+            errorMessage = "No userId specified";
+        }
+
+        return {
+            success: success,
+            message: errorMessage
+        };
+    },
+
+    isDeleteArticleParamasSufficient: info => {
+        let success = true;
+        let errorMessage = "";
+
+        //need to have articleId or url
+        if (!info || !info.userId || !info.articleId) {
+            success = false;
+            errorMessage = "No userId or articleId specified";
+        }
+
+        return {
+            success: success,
+            message: errorMessage
+        };
     }
 };
