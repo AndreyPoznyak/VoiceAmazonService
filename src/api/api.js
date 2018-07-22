@@ -109,8 +109,11 @@ module.exports.addUser = (event, context, callback) => {
 /*
 PATH: GET /articles/all
 INPUT MODEL: -
-QUERY PARAMS: ?userId=1 or without any params
-NOTE: returns all user articles if userId was specified or returns all articles from article table
+QUERY PARAMS: ?userId=1   - return articles directly from DB without any synchronization with third-party systems
+OR ?userId=1?accessToken=4b70fcad-ff4b-9ebc-cd49-1a73df&consumerKey=63497-a7f14af78faac366dd755311  - sync with Pocket and
+return pocket + voice articles
+OR  without any params - return all articels from db [Articles] table
+NOTE:
  */
 module.exports.getAllArticles = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
@@ -119,27 +122,27 @@ module.exports.getAllArticles = (event, context, callback) => {
 
     console.log("Getting articles request");
 
-    //TODO: copy-paste can be removed here
+    const actionsToExecute = [];
+
     if (info && info.userId) {
-        database.getUsersArticles(info.userId)
-        .then(articles => {
-            performRequestCallback(callback, Codes.SUCCESS, articles);
-        }, error => {
-            console.log(error);
-
-            //TODO: handle separately cases with no users and no articles
-            performRequestCallback(callback, Codes.NOT_FOUND, "Error: Can't get user's articles from DB");
-        });
+        actionsToExecute.push(articleService.getVoiceArticles(info.userId)
+            .then(dbArticles => dbArticles.map(article => articleService.mapDatabaseArticle(article))))
+        if (info.accessToken && info.consumerKey) {
+            actionsToExecute.push(articleService.getPocketArticles(info.consumerKey, info.accessToken, info.userId))
+        }
     } else {
-        database.getAllArticles()
-        .then(articles => {
-            performRequestCallback(callback, Codes.SUCCESS, articles);
-        }, error => {
-            console.log(error);
-
-            performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't get all articles from DB");
-        });
+        actionsToExecute.push(articleService.getAllArticles()
+            .then(dbArticles => dbArticles.map(article => articleService.mapDatabaseArticle(article))))
     }
+
+    Promise.all(actionsToExecute)
+        .then(articles => {
+            var mergedArticles = [].concat.apply([], articles);
+            performRequestCallback(callback, Codes.SUCCESS, mergedArticles);
+        })
+        .catch(error => {
+            performRequestCallback(callback, Codes.INTERNAL_ERROR, error.message);
+        });
 };
 
 /*
@@ -160,7 +163,7 @@ module.exports.getVoiceArticles = (event, context, callback) => {
     }
     console.log("Getting Voice articles request");
 
-    database.getUsersArticles(info.userId, serviceTypes.VOICE)
+    articleService.getVoiceArticles(info.userId)
     .then(articles => {
         performRequestCallback(callback, Codes.SUCCESS, articles);
     }, error => {
@@ -190,44 +193,12 @@ module.exports.getPocketArticles = (event, context, callback) => {
         return;
     }
 
-    pocketProvider.getArticles(info.consumerKey, info.accessToken).then(pocketArticlesArray => {
-
-        if (pocketArticlesArray) {
-            const articleDtos = pocketArticlesArray.map(a => articleService.getArticleDto(a))
-
-            const articlePromises = [];
-
-            const uniqueArticles = helper.removeDuplicatesByUniqueKey(articleDtos, 'url');
-            uniqueArticles.forEach(article => {
-                const validationResult = validator.isArticleParamsSufficient(article);
-
-                console.log("Adding article with these params: ", article);
-                articlePromises.push(articleService.handleArticleCreation(info.userId, article))
-
-            });
-
-            Promise.all(articlePromises)
-                .then(responses => {
-                    //add id field(from our db) to articles which come from pocket
-                    const articlesFromDb = responses.map(resp => resp.article);
-                    uniqueArticles.forEach(ua => {
-                        const theSameArticle = articlesFromDb.find(a => a.url === ua.url);
-                        if (theSameArticle != null) {
-                            ua.id = theSameArticle.id
-                        }
-                    });
-
-                    performRequestCallback(callback, Codes.SUCCESS, uniqueArticles);
-                })
-                .catch(error => {
-                    performRequestCallback(callback, Codes.INTERNAL_ERROR, error);
-                });
-        }
-
-    }, error => {
-        console.log(error);
-
-        performRequestCallback(callback, Codes.INTERNAL_ERROR, "Error: Can't get articles from Pocket");
+    articleService.getPocketArticles(info.consumerKey, info.accessToken, info.userId)
+    .then(pocketArticles => {
+        performRequestCallback(callback, Codes.SUCCESS, pocketArticles);
+    })
+    .catch(error => {
+        performRequestCallback(callback, Codes.INTERNAL_ERROR, error.message)
     });
 };
 
