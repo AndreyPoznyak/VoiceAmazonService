@@ -176,6 +176,13 @@ module.exports = {
                 const articleIds = userArticlesHasValues ? userArticles.map(ua => ua.articleId) : [];
 
                 return Article.findAll({
+                    include: [{
+                        model: User,
+                        through: {
+                            attributes: ["externalSystemId", "active", "id", "service", "timeAdded"],
+                            where: { userId }
+                        }
+                    }],
                     where: {
                         id: { [Op.in]: articleIds }
                     }

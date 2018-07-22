@@ -1,6 +1,7 @@
 const database = require("../database/database");
 const serviceTypes = require("../constants/serviceTypes")
 const pocketProvider = require("../providers/pocket");
+const helper = require("../utils/helper");
 
 module.exports = {
     //review perfomance
@@ -61,15 +62,29 @@ module.exports = {
         });
     },
 
-    getArticleDto: (pocketArticle) => {
+    mapPocketArticle: (pocketArticle) => {
         return {
-            url: pocketArticle.resolved_url,
             resolvedUrl: pocketArticle.resolved_url,
             title: pocketArticle.resolved_title || null,
             service: serviceTypes.POCKET,
             timeAdded: pocketArticle.time_added,
             externalSystemId: pocketArticle.resolved_id,
             active: pocketArticle.status == "0"
+        }
+    },
+
+    mapDatabaseArticle: (dbArticleWithUser) => {
+        const isUserDataExist = dbArticleWithUser &&
+                                dbArticleWithUser.users &&
+                                dbArticleWithUser.users.length > 0 &&
+                                dbArticleWithUser.users[0].userArticles;
+        return {
+            resolvedUrl: dbArticleWithUser.resolvedUrl,
+            title: dbArticleWithUser.title || null,
+            service: isUserDataExist ? dbArticleWithUser.users[0].userArticles.service : null,
+            timeAdded: isUserDataExist ? dbArticleWithUser.users[0].userArticles.timeAdded : null,
+            externalSystemId: isUserDataExist ? dbArticleWithUser.users[0].userArticles.externalSystemId : null,
+            active: isUserDataExist ? dbArticleWithUser.users[0].userArticles.active : null
         }
     },
 
@@ -111,5 +126,54 @@ module.exports = {
 
                 return database.deleteUserArticleRelation(userId, articleId);
             })
+    },
+
+    getPocketArticles: (consumerKey, accessToken, userId) => {
+        return pocketProvider.getArticles(consumerKey, accessToken)
+            .then(pocketArticlesArray => {
+
+                if (pocketArticlesArray) {
+                    //TODO: do not use module.exports
+                    const articleDtos = pocketArticlesArray.map(a => module.exports.mapPocketArticle(a))
+
+                    const articlePromises = [];
+
+                    const uniqueArticles = helper.removeDuplicatesByUniqueKey(articleDtos, 'url');
+                    uniqueArticles.forEach(article => {
+
+                        console.log("Adding article with these params: ", article);
+                        articlePromises.push(module.exports.handleArticleCreation(userId, article))
+
+                    });
+
+                    return Promise.all(articlePromises)
+                        .then(responses => {
+                            //add id field(from our db) to articles which come from pocket
+                            const articlesFromDb = responses.map(resp => resp.article);
+                            uniqueArticles.forEach(ua => {
+                                const theSameArticle = articlesFromDb.find(a => a.url === ua.url);
+                                if (theSameArticle != null) {
+                                    ua.id = theSameArticle.id
+                                }
+                            });
+
+                            return uniqueArticles;
+                        })
+                }
+
+            })
+            .catch(error => {
+                console.log(error);
+                return Promise.reject({ Message: `Can't get articles from Pocket due to error: ${error.message}` })
+            });
+    },
+
+    getVoiceArticles: (userId) => {
+        return database.getUsersArticles(userId, serviceTypes.VOICE);
+    },
+
+    getAllArticles: () => {
+        return database.getAllArticles();
     }
 };
+
