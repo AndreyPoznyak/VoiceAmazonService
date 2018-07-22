@@ -64,6 +64,7 @@ module.exports = {
 
     mapPocketArticle: (pocketArticle) => {
         return {
+            url: pocketArticle.resolved_url,
             resolvedUrl: pocketArticle.resolved_url,
             title: pocketArticle.resolved_title || null,
             service: serviceTypes.POCKET,
@@ -79,6 +80,7 @@ module.exports = {
                                 dbArticleWithUser.users.length > 0 &&
                                 dbArticleWithUser.users[0].userArticles;
         return {
+            url: dbArticleWithUser.resolvedUrl,
             resolvedUrl: dbArticleWithUser.resolvedUrl,
             title: dbArticleWithUser.title || null,
             service: isUserDataExist ? dbArticleWithUser.users[0].userArticles.service : null,
