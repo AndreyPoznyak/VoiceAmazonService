@@ -148,7 +148,7 @@ module.exports = {
             .then(() => article.save())
             .catch(error => {
                 console.log(error);
-                reject({message: "Error: Not able to update article's content"});
+                reject({ message: "Error: Not able to update article's content" });
             });
     },
 
