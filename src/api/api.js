@@ -252,7 +252,6 @@ module.exports.getArticlesContent = (event, context, callback) => {
     }
 
     const handleContent = (article) => {
-
         if (article.articleContent) {
             return sendData(article);
         }
@@ -278,7 +277,8 @@ module.exports.getArticlesContent = (event, context, callback) => {
             article: JSON.parse(article.articleContent.text),
             lang: article.language,
             images: JSON.parse(article.articleContent.images),
-            url: article.url
+            url: article.url,
+            id: article.id
         });
     }
 
