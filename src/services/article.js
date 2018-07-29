@@ -84,7 +84,8 @@ module.exports = {
             resolvedUrl: dbArticleWithUser.resolvedUrl,
             title: dbArticleWithUser.title || null,
             service: isUserDataExist ? dbArticleWithUser.users[0].userArticles.service : null,
-            timeAdded: isUserDataExist ? dbArticleWithUser.users[0].userArticles.timeAdded : null,
+            //return unix timestamp to consumers
+            timeAdded: isUserDataExist ? Math.round(new Date(dbArticleWithUser.users[0].userArticles.timeAdded).getTime()/1000) : null,
             externalSystemId: isUserDataExist ? dbArticleWithUser.users[0].userArticles.externalSystemId : null,
             active: isUserDataExist ? dbArticleWithUser.users[0].userArticles.active : null,
             id: dbArticleWithUser.id
