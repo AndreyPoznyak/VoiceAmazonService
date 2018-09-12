@@ -352,17 +352,17 @@ QUERY PARAMS: ?userId=1&articleId=1
 module.exports.deleteArticle = (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
-    const info = event.queryStringParameters;
+    const body = JSON.parse(event.body);
 
-    const validationResult = validator.isDeleteArticleParamasSufficient(info);
+    const validationResult = validator.isDeleteArticleParamasSufficient(body);
 
     if (!validationResult.success) {
         performRequestCallback(callback, Codes.BAD_REQUEST, `Error: ${validationResult.message}`);
         return;
     }
 
-    articleService.deleteVoiceArticle(info.userId, info.articleId)
-        .then(response => {
+    articleService.deleteVoiceArticle(body.userId, body.articleId)
+        .then(() => {
             performRequestCallback(callback, Codes.SUCCESS, 'Article has been successfully deleted');
         })
         .catch(error => {
