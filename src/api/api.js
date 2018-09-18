@@ -230,6 +230,8 @@ module.exports.getArticlesContent = (event, context, callback) => {
         //get content from pocket, save in db and get article with content again
         return pocketProvider.getContent(article.url)
             .then(result => {
+
+                //TODO: if there is no content received - let the client know
                 return database.updateArticleData({
                     resolvedUrl: result["resolvedUrl"],
                     text: result["article"],
